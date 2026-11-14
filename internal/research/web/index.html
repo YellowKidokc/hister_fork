@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Theophysics · Research control center</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <div id="login" class="login-screen">
+      <form id="login-form" class="login-card">
+        <span class="eyebrow">THEOPHYSICS</span>
+        <h1>Your research,<br />in one place.</h1>
+        <p>Connect to your research library to import, classify, search, and export your work.</p>
+        <label for="access-token">Control center access token</label
+        ><input id="access-token" type="password" autocomplete="current-password" required /><button
+          class="primary"
+          type="submit"
+        >
+          Connect to library <span aria-hidden="true">→</span>
+        </button>
+        <p id="login-error" role="alert"></p>
+        <small
+          >The token stays in this browser tab’s session. Use your private HTTPS address when
+          connecting to the NAS.</small
+        >
+      </form>
+    </div>
+    <div id="shell" hidden>
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="Theophysics home"
+          ><span class="brand-mark">Θ</span
+          ><span>THEOPHYSICS<small>RESEARCH CONTROL CENTER</small></span></a
+        >
+        <div class="nav-label">WORKSPACE</div>
+        <nav aria-label="Main navigation">
+          <button id="nav-jobs" class="nav-item active">
+            <span aria-hidden="true">◫</span><span>Research jobs</span></button
+          ><button id="nav-library" class="nav-item">
+            <span aria-hidden="true">⌕</span><span>Search library</span></button
+          ><button id="nav-review" class="nav-item">
+            <span aria-hidden="true">✓</span><span>Classification review</span></button
+          ><button id="nav-audit" class="nav-item">
+            <span aria-hidden="true">≡</span><span>Activity & receipts</span>
+          </button>
+          <button id="nav-storage" class="nav-item">
+            <span aria-hidden="true">▤</span><span>Storage</span>
+          </button>
+        </nav>
+        <div class="sidebar-note">
+          <span class="online-dot"></span> Connected to your library
+          <p>One canonical source.<br />Every action has a receipt.</p>
+        </div>
+        <button id="disconnect" class="subtle">Disconnect</button>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <span id="breadcrumb">Workspace / Research jobs</span
+          ><span class="private-label">PRIVATE RESEARCH LIBRARY</span>
+        </header>
+        <div id="notice" role="status" aria-live="polite" hidden></div>
+        <main>
+          <section id="jobs-page">
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">COLLECT · UNDERSTAND · CONNECT</span>
+                <h1>Research jobs</h1>
+                <p>Give each collection a purpose. Review it before it enters your library.</p>
+              </div>
+              <button id="new-job" class="primary">+ Create job</button>
+            </div>
+            <div class="pipeline" aria-label="Research workflow">
+              <span>01 <b>Create a job</b></span
+              ><i>→</i><span>02 <b>Preserve sources</b></span
+              ><i>→</i><span>03 <b>Review classifications</b></span
+              ><i>→</i><span>04 <b>Search & export</b></span>
+            </div>
+            <div id="job-list" class="job-grid"></div>
+            <div id="job-workspace" hidden>
+              <div class="section-heading">
+                <div>
+                  <button id="back-jobs" class="text-button">← All research jobs</button>
+                  <h2 id="job-title"></h2>
+                  <p id="job-summary"></p>
+                </div>
+                <span id="job-state" class="badge"></span>
+              </div>
+              <section id="intake" class="panel intake-panel" aria-labelledby="intake-heading">
+                <div class="intake-title">
+                  <span class="step">01</span>
+                  <div>
+                    <h3 id="intake-heading">Add your source material</h3>
+                    <p>
+                      Files and folders are copied into the server’s canonical storage. Original
+                      files stay untouched.
+                    </p>
+                  </div>
+                </div>
+                <div
+                  id="dropzone"
+                  class="dropzone"
+                  tabindex="0"
+                  role="button"
+                  aria-label="Drop files or folders, or choose files"
+                >
+                  <span class="upload-symbol" aria-hidden="true">↥</span
+                  ><strong>Drop files or entire folders here</strong>
+                  <p>Text, Markdown, HTML, PDF, DOCX, and code · 32 MiB per file</p>
+                  <div>
+                    <button id="choose-files" class="secondary">Choose files</button
+                    ><button id="choose-folder" class="secondary">Choose a folder</button>
+                  </div>
+                  <small
+                    >Collections upload one file at a time. Each accepted source receives a hash and
+                    receipt.</small
+                  >
+                </div>
+                <input id="files" type="file" multiple hidden /><input
+                  id="folder"
+                  type="file"
+                  multiple
+                  webkitdirectory
+                  hidden
+                />
+                <div class="url-intake">
+                  <label for="source-urls">Or add URLs</label
+                  ><textarea
+                    id="source-urls"
+                    rows="2"
+                    placeholder="One public URL per line"
+                  ></textarea>
+                  <div class="button-row">
+                    <button id="import-urls" class="secondary">Import URLs</button
+                    ><button id="choose-sheet" class="text-button">
+                      Import links from CSV / TSV / XLSX</button
+                    ><input id="sheet" type="file" accept=".csv,.tsv,.xlsx" hidden />
+                  </div>
+                  <small id="url-hosts"></small>
+                </div>
+                <div
+                  id="upload-status"
+                  class="upload-status"
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                >
+                  <progress id="upload-progress" value="0" max="1"></progress
+                  ><span id="upload-label"></span
+                  ><button id="retry-uploads" class="text-button" hidden>Retry failed files</button>
+                </div>
+                <ul id="upload-errors" class="error-list"></ul>
+              </section>
+              <section class="panel" aria-labelledby="review-heading">
+                <div class="panel-heading">
+                  <div>
+                    <span class="eyebrow">02 · CLASSIFICATION REVIEW</span>
+                    <h3 id="review-heading">Keep the meaning. Review the labels.</h3>
+                    <p>
+                      Category, evidence quality, validity, relevance, and canon remain separate.
+                    </p>
+                  </div>
+                  <div class="button-row">
+                    <button id="suggest-ai" class="secondary">Suggest with AI</button
+                    ><button id="refresh-job" class="text-button">Refresh status</button>
+                  </div>
+                </div>
+                <div id="review-help" class="info-strip"></div>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>
+                          <input
+                            id="select-job-all"
+                            type="checkbox"
+                            aria-label="Select all extractable documents"
+                          />
+                        </th>
+                        <th>Canonical document</th>
+                        <th>Classification</th>
+                        <th>Source & duplicates</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="job-documents"></tbody>
+                  </table>
+                </div>
+                <button id="more-documents" class="text-button" hidden>
+                  Show 100 more documents
+                </button>
+                <div class="commit-bar">
+                  <span id="selected-count">0 selected</span>
+                  <div class="button-row">
+                    <button id="commit-policy" class="secondary">Use confidence policy</button
+                    ><button id="commit-manual" class="primary">
+                      Commit selected classifications →
+                    </button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+          <section id="library-page" hidden>
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">YOUR SHARED RESEARCH LIBRARY</span>
+                <h1>Find the thread.</h1>
+                <p>Search material collected from your desktop and NAS in one place.</p>
+              </div>
+              <div class="button-row">
+                <button id="plan-selected-storage" class="secondary" disabled>
+                  Plan move to volume one</button
+                ><button id="export" class="primary" disabled>Export selected as Markdown</button>
+              </div>
+            </div>
+            <form id="search-form" class="search-panel">
+              <label class="sr-only" for="search-query">Search library</label
+              ><input
+                id="search-query"
+                type="search"
+                placeholder="Search the words, ideas, or questions in your research…"
+              /><button class="primary" type="submit">Search</button>
+              <div class="search-filters">
+                <label
+                  >Category
+                  <select id="filter-category">
+                    <option value="">All categories</option>
+                  </select></label
+                ><label
+                  >Job
+                  <select id="filter-job">
+                    <option value="">All research jobs</option>
+                  </select></label
+                >
+              </div>
+            </form>
+            <div class="section-heading">
+              <p id="search-summary">Your committed, indexed documents appear here.</p>
+              <span id="export-count"></span>
+            </div>
+            <div id="search-results" class="search-results"></div>
+            <button id="next-results" class="secondary" hidden>Next results →</button>
+          </section>
+          <section id="review-page" hidden>
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">HUMAN JUDGMENT</span>
+                <h1>Resolve the uncertain.</h1>
+                <p>
+                  Medium-confidence labels need review. Low-confidence proposals stay here until you
+                  decide.
+                </p>
+              </div>
+              <button id="refresh-review" class="secondary">Refresh</button>
+            </div>
+            <p class="muted">
+              Up to 200 pending proposals at a time. Resolving a category does not determine
+              evidence quality, formal validity, personal relevance, or canon.
+            </p>
+            <div id="review-queue" class="search-results"></div>
+          </section>
+          <section id="storage-page" hidden>
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">NVME WORKSPACE · VOLUME ONE LIBRARY</span>
+                <h1>Choose what belongs where.</h1>
+                <p>
+                  Keep the programs fast. Choose which research files belong in your volume-one
+                  library.
+                </p>
+              </div>
+              <span class="badge neutral">Automatic deletion: off</span>
+            </div>
+            <div class="storage-layout">
+              <section
+                class="panel storage-destination"
+                aria-labelledby="storage-destination-title"
+              >
+                <span class="eyebrow">DEDICATED LIBRARY FOLDER</span>
+                <h3 id="storage-destination-title">Volume one · Theophysics library</h3>
+                <code id="storage-destination"></code>
+                <p>
+                  Planned destination. This page does not create the folder or verify that the NAS
+                  is connected.
+                </p>
+              </section>
+              <section class="panel storage-fixed" aria-labelledby="storage-fixed-title">
+                <span class="eyebrow">KEEPS RUNNING ON NVME</span>
+                <h3 id="storage-fixed-title">Your fast working system</h3>
+                <ul>
+                  <li>Programs and running services</li>
+                  <li>Your existing PostgreSQL database</li>
+                  <li>Hister’s full-text search index</li>
+                </ul>
+              </section>
+            </div>
+            <section class="panel" aria-labelledby="storage-choices-title">
+              <div class="panel-heading">
+                <div>
+                  <span class="eyebrow">01 · CHOOSE YOUR DATA</span>
+                  <h3 id="storage-choices-title">What would you like to move?</h3>
+                  <p>
+                    Choose file types, then select the research documents below. Up to 100 documents
+                    per preview.
+                  </p>
+                </div>
+              </div>
+              <div class="storage-kinds">
+                <label
+                  ><input id="storage-originals" type="checkbox" checked /><span
+                    ><strong>Original research files</strong
+                    ><small
+                      >Documents, PDFs, saved web pages, spreadsheets, and other preserved source
+                      files.</small
+                    ></span
+                  ></label
+                >
+                <label
+                  ><input id="storage-text" type="checkbox" /><span
+                    ><strong>Extracted document text</strong
+                    ><small
+                      >Stored text used for previews and Markdown export. Leave this unchecked to
+                      keep it on NVMe.</small
+                    ></span
+                  ></label
+                >
+              </div>
+              <form id="storage-filter-form" class="storage-filters">
+                <label
+                  >Research job
+                  <select id="storage-job">
+                    <option value="">All research jobs</option>
+                  </select></label
+                ><label
+                  >Category
+                  <select id="storage-category">
+                    <option value="">All categories</option>
+                  </select></label
+                ><label
+                  >Document age
+                  <select id="storage-age">
+                    <option value="0">All ages</option>
+                    <option value="60">Added more than 60 days ago</option>
+                    <option value="90">Added more than 90 days ago</option>
+                  </select></label
+                ><button type="submit" class="secondary">Apply filters</button>
+              </form>
+              <div class="info-strip">
+                Age means time since import, not last use. Filters only change this list; they never
+                schedule cleanup or delete anything.
+              </div>
+              <div class="storage-list-heading">
+                <span id="storage-summary" role="status"></span
+                ><button id="storage-clear" class="text-button">Clear selection</button>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>
+                        <input
+                          id="storage-select-page"
+                          type="checkbox"
+                          aria-label="Select this page for storage preview"
+                        />
+                      </th>
+                      <th>Research document</th>
+                      <th>Original size</th>
+                      <th>Categories</th>
+                      <th>Added</th>
+                    </tr>
+                  </thead>
+                  <tbody id="storage-documents"></tbody>
+                </table>
+              </div>
+              <div class="commit-bar">
+                <span id="storage-selected">0 documents selected</span>
+                <div class="button-row">
+                  <button id="storage-next" class="secondary" hidden>Next documents →</button
+                  ><button id="storage-preview" class="primary" disabled>
+                    Preview move to volume one →
+                  </button>
+                </div>
+              </div>
+            </section>
+            <section
+              id="storage-plan"
+              class="panel storage-plan"
+              hidden
+              aria-labelledby="storage-plan-title"
+            >
+              <div class="panel-heading">
+                <div>
+                  <span class="eyebrow">02 · REVIEW YOUR SAVED PREVIEW</span>
+                  <h3 id="storage-plan-title">Proposed files and destination</h3>
+                  <p id="storage-plan-summary"></p>
+                </div>
+                <button id="storage-download-plan" class="secondary">Download plan</button>
+              </div>
+              <div class="info-strip">
+                Preview only. Your files remain where they are. No database or search-index
+                migration, file transfer, or deletion is performed.
+              </div>
+              <div id="storage-plan-items"></div>
+            </section>
+            <section class="panel storage-history">
+              <h3>Saved move previews</h3>
+              <p>Review a previous selection without moving any files.</p>
+              <div id="storage-plan-history"></div>
+            </section>
+          </section>
+          <section id="audit-page" hidden>
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">PROVENANCE & ACCOUNTABILITY</span>
+                <h1>A record of the work.</h1>
+                <p>Source receipts, classification decisions, index attempts, and exports.</p>
+              </div>
+              <button id="refresh-events" class="secondary">Refresh</button>
+            </div>
+            <p class="muted">
+              Latest 200 actions. Receipt details also appear inside each document.
+            </p>
+            <div id="events" class="events"></div>
+          </section>
+        </main>
+        <footer>
+          THEOPHYSICS
+          <span
+            >Identity in PostgreSQL · Retrieval powered by Hister · Sources preserved on your
+            server</span
+          >
+        </footer>
+      </div>
+    </div>
+    <dialog id="create-dialog">
+      <form id="create-form">
+        <div class="dialog-header">
+          <span class="eyebrow">A NEW LINE OF INQUIRY</span
+          ><button type="button" class="close-dialog" aria-label="Close">×</button>
+        </div>
+        <h2>Create a research job</h2>
+        <label for="job-name">Give this collection a name</label
+        ><input
+          id="job-name"
+          required
+          maxlength="200"
+          placeholder="e.g. Information, entropy, and the Master Equation"
+        />
+        <p>
+          Choose initial categories, or leave them open and review later. These are independent
+          labels, not judgments of truth or canon.
+        </p>
+        <div id="initial-categories" class="category-grid"></div>
+        <div class="dialog-actions">
+          <button type="button" class="secondary close-dialog">Cancel</button
+          ><button class="primary" type="submit">Create job →</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="detail-dialog">
+      <div class="dialog-header">
+        <span class="eyebrow">DOCUMENT & SOURCE RECEIPTS</span
+        ><button class="close-dialog" aria-label="Close">×</button>
+      </div>
+      <h2 id="detail-title"></h2>
+      <div id="detail-meta"></div>
+      <div id="detail-categories" class="category-grid"></div>
+      <div id="detail-proposals"></div>
+      <div id="detail-duplicates"></div>
+      <div id="detail-receipts"></div>
+      <h3>Extracted text preview</h3>
+      <pre id="detail-text"></pre>
+      <div class="dialog-actions">
+        <button id="download-source" class="secondary">Download preserved source</button
+        ><button class="primary close-dialog">Done</button>
+      </div>
+    </dialog>
+  </body>
+</html>

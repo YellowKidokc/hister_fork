@@ -1,0 +1,81 @@
+# Run from deploy/theophysics after reviewing .env.example and storage volumes.
+# PostgreSQL and Hister are private to this Compose network. Put the control
+# center behind the Synology HTTPS reverse proxy for access from Windows.
+services:
+  postgres:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: theophysics
+      POSTGRES_USER: theophysics
+      POSTGRES_PASSWORD: ${TP_DB_PASSWORD:?Set TP_DB_PASSWORD in your private .env}
+    volumes:
+      - type: bind
+        source: ${TP_POSTGRES_DIR:?Choose the inspected database volume}
+        target: /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U theophysics -d theophysics']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  hister:
+    # Build the selected fork before deployment, or supply its published image.
+    image: ${TP_HISTER_IMAGE:-theophysics-hister:local}
+    build:
+      context: ../..
+      dockerfile: deploy/theophysics/hister.Dockerfile
+      target: release
+    restart: unless-stopped
+    environment:
+      HISTER__SERVER__ADDRESS: 0.0.0.0:4433
+      HISTER__SERVER__BASE_URL: http://hister:4433
+      HISTER__APP__ACCESS_TOKEN: ${TP_HISTER_TOKEN:?Set a private Hister token}
+      XDG_STATE_HOME: /hister/data
+    volumes:
+      - type: bind
+        source: ${TP_HISTER_DIR:?Choose the inspected index volume}
+        target: /hister/data
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  control-center:
+    image: theophysics-control-center:local
+    build:
+      context: ../..
+      dockerfile: deploy/theophysics/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hister:
+        condition: service_healthy
+    ports:
+      - '${TP_BIND_ADDRESS:-127.0.0.1}:4444:4444'
+    environment:
+      TP_DATABASE_URL: postgres://theophysics:${TP_DB_PASSWORD:?Set a URL-safe password}@postgres:5432/theophysics?sslmode=disable
+      TP_ACCESS_TOKEN: ${TP_ACCESS_TOKEN:?Set a private control center token}
+      TP_HISTER_URL: http://hister:4433
+      TP_HISTER_TOKEN: ${TP_HISTER_TOKEN}
+      TP_DATA_DIR: /data
+      # A proposed location displayed by Storage, not a mounted/migration target.
+      TP_VOLUME_ONE_FOLDER: ${TP_VOLUME_ONE_FOLDER:-/volume1/Theophysics/library}
+      TP_ADDRESS: 0.0.0.0:4444
+      # Internal Compose traffic must stay on this private network even on a
+      # host that injects an outbound HTTP proxy into new containers.
+      NO_PROXY: 127.0.0.1,localhost,::1,hister,postgres
+      no_proxy: 127.0.0.1,localhost,::1,hister,postgres
+      TP_URL_HOSTS: ${TP_URL_HOSTS:-}
+      TP_AI_BASE_URL: ${TP_AI_BASE_URL:-}
+      TP_AI_MODEL: ${TP_AI_MODEL:-}
+      TP_AI_KEY: ${TP_AI_KEY:-}
+    volumes:
+      - type: bind
+        source: ${TP_DOCUMENT_DIR:?Choose the inspected document volume}
+        target: /data
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
