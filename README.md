@@ -96,3 +96,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a change. Bugs and sug
 ## License
 
 [AGPLv3](LICENSE) or any later version
+
+## YouTube transcript acquisition
+
+See [the optional Python integration](integrations/youtube/README.md) for incremental channel downloads, readable Markdown, SRT conversion and indexing into this server.

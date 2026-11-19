@@ -1,0 +1,12 @@
+subtitles/
+venv/
+.venv/
+__pycache__/
+*.pyc
+proxies.txt
+.env
+*.env
+.progress.json
+.library_index.json*
+.hister-sync.json*
+*.log
