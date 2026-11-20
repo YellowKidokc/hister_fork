@@ -660,6 +660,7 @@ func FieldCatalog() []FieldMetadata {
 			}},
 		},
 		fileManagedField("server.database", groupStorage, "Database", "SQLite filename or PostgreSQL connection settings."),
+		{Path: "indexer.compression", Group: groupStorage, Label: "Saved page compression", Description: "Choose the compression used for new page HTML and favicon files. Previously saved files remain readable.", Schema: SettingSchema{Sensitivity: "none", Choices: []string{CompressionGzip, CompressionZstd}}},
 		{Path: "server.max_batch_body_size", Group: groupRequestLimits, Label: "Maximum batch size", Description: "Maximum batch request body size in MiB. Applies to subsequent requests. Larger limits allow greater memory use.", Schema: SettingSchema{Sensitivity: "none", Min: &minFileSize, Max: &maxFileSize}},
 		{Path: "server.metrics", Group: groupMonitoring, Label: "Metrics", Description: "Expose monitoring data at /metrics. Requires an administrator or the instance token when authentication is enabled; otherwise anyone can access it.", Schema: SettingSchema{Sensitivity: "none"}},
 		{Path: "server.expose_version", Group: groupMonitoring, Label: "Expose version", Description: "Share the installed Nogon version with all visitors.", Schema: SettingSchema{Sensitivity: "none"}},
