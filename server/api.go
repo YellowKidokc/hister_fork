@@ -974,6 +974,14 @@ func init() {
 			},
 		},
 		{
+			Name:        "Download offline reader",
+			Path:        "/api/document/reader",
+			Method:      GET,
+			NoStore:     true,
+			Handler:     serveOfflineReader,
+			Description: "Download the indexed text as a standalone HTML reader page",
+		},
+		{
 			Name:         "Extractors",
 			Path:         "/api/extractors",
 			Method:       GET,
