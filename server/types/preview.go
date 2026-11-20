@@ -28,5 +28,6 @@ type DocumentPreviewResponse struct {
 	Meta             map[string]any         `json:"meta,omitempty"`
 	VersionID        uint                   `json:"version_id,omitempty"`
 	VersionCreatedAt *time.Time             `json:"version_created_at,omitempty"`
+	VisitCount       *int64                 `json:"visit_count,omitempty"`
 	VersionCount     int64                  `json:"version_count,omitempty"`
 }

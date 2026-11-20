@@ -44,6 +44,7 @@ export interface PreviewDocumentDetails {
 }
 
 export interface DocumentPreviewResponse {
+  visit_count?: number;
   title: string;
   content: string;
   template: string;
