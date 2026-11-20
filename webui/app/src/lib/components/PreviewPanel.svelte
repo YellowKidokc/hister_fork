@@ -592,6 +592,9 @@
         {#key documentId || url}
           <DocumentAnnotations
             endpoint={documentRequestUrl('/document/annotations', url, documentId)}
+            summaryEndpoint={$publicConfig.aiSummaryEnabled
+              ? documentRequestUrl('/document/summary', url, documentId)
+              : undefined}
           />
         {/key}
       {/if}

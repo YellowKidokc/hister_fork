@@ -962,6 +962,15 @@ func init() {
 			Description:  "Save the current user's tags, notes, and summary for an indexed document",
 		},
 		{
+			Name:         "Generate document summary",
+			Path:         "/api/document/summary",
+			Method:       POST,
+			CSRFRequired: true,
+			NoStore:      true,
+			Handler:      serveDocumentSummary,
+			Description:  "Generate a draft summary for one indexed document using the configured AI service",
+		},
+		{
 			Name:         "Preview",
 			Path:         "/api/preview",
 			Method:       GET,

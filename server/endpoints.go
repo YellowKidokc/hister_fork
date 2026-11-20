@@ -424,6 +424,7 @@ func serveConfig(c *webContext) {
 		Authenticated        bool                      `json:"authenticated"`
 		DiagnosticsAvailable bool                      `json:"diagnosticsAvailable"`
 		Public               bool                      `json:"public"`
+		AISummaryEnabled     bool                      `json:"aiSummaryEnabled,omitempty"`
 		CanWrite             bool                      `json:"canWrite"`
 		CanConfigure         bool                      `json:"canConfigure"`
 		HistoryEnabled       bool                      `json:"historyEnabled"`
@@ -455,6 +456,7 @@ func serveConfig(c *webContext) {
 	for name := range c.Config.Server.OAuth {
 		oauthProviders = append(oauthProviders, name)
 	}
+	summaryEndpoint, _ := summaryService()
 	resp := configResponse{
 		BaseURL:              c.Config.BaseURL(""),
 		BasePath:             c.Config.BasePathPrefix(),
@@ -470,6 +472,7 @@ func serveConfig(c *webContext) {
 		Authenticated:        authenticated,
 		DiagnosticsAvailable: true,
 		Public:               c.Config.App.Public,
+		AISummaryEnabled:     canWrite(c) && summaryEndpoint != "",
 		CanWrite:             canWrite(c),
 		CanConfigure:         canConfigure(c),
 		HistoryEnabled:       historyEnabled(c),
