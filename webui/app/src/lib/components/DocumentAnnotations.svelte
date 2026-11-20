@@ -3,7 +3,7 @@
   import { apiFetch } from '#lib/api.js';
   import { Button } from '@nogon/components/ui/button';
 
-  let { endpoint }: { endpoint: string } = $props();
+  let { endpoint, summaryEndpoint }: { endpoint: string; summaryEndpoint?: string } = $props();
 
   let loaded = $state(false);
   let busy = $state(false);
@@ -26,6 +26,29 @@
       loaded = true;
     } catch {
       status = 'Could not load annotations.';
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function generateSummary() {
+    if (!summaryEndpoint || busy) return;
+    busy = true;
+    status = 'Generating a summary…';
+    try {
+      const response = await apiFetch(summaryEndpoint, {
+        method: 'POST',
+        redirectOnForbidden: false,
+      });
+      if (!response.ok) {
+        status = (await response.text()).trim() || 'Could not generate a summary.';
+        return;
+      }
+      const draft = await response.json();
+      summary = draft.summary;
+      status = 'Draft generated. Save annotations to keep it.';
+    } catch {
+      status = 'Could not generate a summary.';
     } finally {
       busy = false;
     }
@@ -91,6 +114,18 @@
           bind:value={summary}
           disabled={busy}></textarea>
       </label>
+      {#if summaryEndpoint}
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          class="justify-self-start"
+          disabled={busy}
+          onclick={generateSummary}
+        >
+          Generate summary with AI
+        </Button>
+      {/if}
       <Button type="submit" size="sm" class="justify-self-start" disabled={busy}
         >Save annotations</Button
       >
