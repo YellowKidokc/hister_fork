@@ -19,14 +19,15 @@ type PreviewDocumentDetails struct {
 // DocumentPreviewResponse is the API response for a rendered document
 // preview and its searchable properties.
 type DocumentPreviewResponse struct {
-	Title            string                 `json:"title"`
-	Content          string                 `json:"content"`
-	Template         string                 `json:"template"`
-	Added            int64                  `json:"added"`
-	Updated          int64                  `json:"updated"`
-	Details          PreviewDocumentDetails `json:"details"`
-	Meta             map[string]any         `json:"meta,omitempty"`
-	VersionID        uint                   `json:"version_id,omitempty"`
-	VersionCreatedAt *time.Time             `json:"version_created_at,omitempty"`
-	VersionCount     int64                  `json:"version_count,omitempty"`
+	YouTubeDownloadable bool                   `json:"youtube_downloadable,omitempty"`
+	Title               string                 `json:"title"`
+	Content             string                 `json:"content"`
+	Template            string                 `json:"template"`
+	Added               int64                  `json:"added"`
+	Updated             int64                  `json:"updated"`
+	Details             PreviewDocumentDetails `json:"details"`
+	Meta                map[string]any         `json:"meta,omitempty"`
+	VersionID           uint                   `json:"version_id,omitempty"`
+	VersionCreatedAt    *time.Time             `json:"version_created_at,omitempty"`
+	VersionCount        int64                  `json:"version_count,omitempty"`
 }

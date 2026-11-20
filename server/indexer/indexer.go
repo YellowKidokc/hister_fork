@@ -20,6 +20,7 @@ import (
 	"github.com/asciimoo/nogon/config"
 	"github.com/asciimoo/nogon/files"
 	"github.com/asciimoo/nogon/files/extract"
+	"github.com/asciimoo/nogon/internal/youtubemedia"
 	"github.com/asciimoo/nogon/server/document"
 	"github.com/asciimoo/nogon/server/extractor"
 	"github.com/asciimoo/nogon/server/indexer/querybuilder"
@@ -1849,6 +1850,9 @@ func (b *MultiBatch) Save() error {
 	}
 	b.indexer.cleanupDataKeys(b.orphanedHTMLKeys, "", b.orphanedFaviconKeys, "")
 	for id := range b.deletedIDs {
+		if err := youtubemedia.Remove(b.indexer.dir, id); err != nil {
+			log.Warn().Err(err).Msg("failed to remove downloaded video")
+		}
 		if err := b.indexer.cancelEmbedding(id); err != nil {
 			log.Warn().Err(err).Str("id", id).Msg("failed to cancel embedding job")
 		}
@@ -1872,6 +1876,9 @@ func (i *Indexer) Delete(id string) error {
 		if err := idx.Delete(id); err != nil {
 			return err
 		}
+	}
+	if err := youtubemedia.Remove(i.dir, id); err != nil {
+		log.Warn().Err(err).Msg("failed to remove downloaded video")
 	}
 	if err := i.cancelEmbedding(id); err != nil {
 		log.Warn().Err(err).Str("id", id).Msg("failed to cancel embedding job")

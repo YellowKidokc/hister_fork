@@ -78,6 +78,7 @@ type App struct {
 	RedirectOnNoResults    bool   `yaml:"redirect_on_no_results" mapstructure:"redirect_on_no_results"`
 	DisplayExtractorConfig bool   `yaml:"display_extractor_config" mapstructure:"display_extractor_config"`
 	DisablePreviews        bool   `yaml:"disable_previews" mapstructure:"disable_previews"`
+	YouTubeDownloads       bool   `yaml:"youtube_downloads" mapstructure:"youtube_downloads"`
 	Profiler               bool   `yaml:"profiler" mapstructure:"profiler"`
 }
 

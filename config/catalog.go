@@ -510,6 +510,13 @@ func FieldCatalog() []FieldMetadata {
 			Schema:      SettingSchema{Sensitivity: "none"},
 		},
 		{
+			Path:        "app.youtube_downloads",
+			Group:       groupSearchBehavior,
+			Label:       "YouTube video downloads",
+			Description: "Allow users to download supported indexed YouTube videos using yt-dlp.",
+			Schema:      SettingSchema{Sensitivity: "none"},
+		},
+		{
 			Path:        "app.access_token",
 			Group:       groupAccess,
 			Label:       "Access token",

@@ -1,6 +1,7 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <script lang="ts">
   import VideoPreview from './VideoPreview.svelte';
+  import YouTubeDownload from './YouTubeDownload.svelte';
   import IssuePreview from './IssuePreview.svelte';
   import CodePreview, { parseCodePreview, type CodePreviewData } from './CodePreview.svelte';
   import { parseIssuePreview, type IssuePreviewData } from '#lib/issue-preview.js';
@@ -77,6 +78,7 @@
   let loading = $state(false);
   let previewError = $state('');
   let versionCount = $state(0);
+  let youtubeDownloadable = $state(false);
   let versions = $state<DocumentVersion[]>([]);
   let showVersions = $state(false);
   let versionsLoading = $state(false);
@@ -276,6 +278,7 @@
       meta = data.meta ?? null;
       documentDetails = data.details;
       versionCount = data.version_count ?? 0;
+      youtubeDownloadable = data.youtube_downloadable === true;
       if (data.version_id && data.version_created_at) {
         viewingVersion = {
           id: data.version_id,
@@ -586,6 +589,11 @@
           {/if}
         </h2>
       </div>
+      {#if youtubeDownloadable}
+        {#key documentId || url}
+          <YouTubeDownload endpoint={documentRequestUrl('/document/youtube', url, documentId)} />
+        {/key}
+      {/if}
       {#if showDocumentDetails && hasDocumentDetails}
         <div
           id="preview-document-details"

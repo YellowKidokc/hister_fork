@@ -27,6 +27,7 @@ import (
 
 	"github.com/asciimoo/nogon/config"
 	"github.com/asciimoo/nogon/files"
+	"github.com/asciimoo/nogon/internal/youtubemedia"
 	"github.com/asciimoo/nogon/server/document"
 	"github.com/asciimoo/nogon/server/extractor"
 	"github.com/asciimoo/nogon/server/extractor/sdk"
@@ -1631,6 +1632,8 @@ func servePreview(c *webContext) {
 			Metadata: metadata,
 		},
 	}
+	payload.YouTubeDownloadable = viewingVersionID == 0 && canWrite(c) && c.Config.App.YouTubeDownloads &&
+		doc.UserID == c.UserID && youtubemedia.WatchURL(doc.URL) != ""
 	if viewingVersionID > 0 {
 		payload.VersionID = viewingVersionID
 		payload.VersionCreatedAt = &viewingVersionCreatedAt
