@@ -5,7 +5,7 @@ This sets up three containers as one Portainer stack:
 | Container           | What it is                                         | Address                   |
 | ------------------- | -------------------------------------------------- | ------------------------- |
 | `Nogon`             | The search engine, homepage groups, `/research`    | http://192.168.1.177:4433 |
-| `Nogon-Research`    | The Theophysics research control center            | http://192.168.1.177:4444 |
+| `Nogon-Research`    | The Theophysics research control center            | internal only             |
 | `Nogon-Research-DB` | PostgreSQL for the research center (not reachable) | internal only             |
 
 Written for a DS923+ with the stack on **Volume 2**. Change `/volume2` everywhere if yours differs.
@@ -66,8 +66,8 @@ Click **Deploy the stack**. The first deploy builds both images from the code on
 ## 5. Check it
 
 - http://192.168.1.177:4433 should show the Nogon homepage, with your **Groups** if you copied old data.
-- http://192.168.1.177:4433/research should show the research page with **Import links**.
-- http://192.168.1.177:4444 should show the research control center (log in with `RESEARCH_TOKEN`).
+- Open http://192.168.1.177:4433/research for link lists, file and folder uploads, classification, and review. Sign in with `RESEARCH_TOKEN`.
+- Earlier Nogon research jobs and link import receipts remain available under **Saved Nogon jobs and receipts**. The original index and databases stay in place.
 - Point the browser extension at `http://192.168.1.177:4433` (and enter `NOGON_TOKEN` if you set one).
 
 ## Updating later

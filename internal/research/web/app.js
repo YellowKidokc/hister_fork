@@ -5,7 +5,11 @@ const el = (tag, text, className) => {
   if (className) node.className = className;
   return node;
 };
-let token = sessionStorage.getItem('tp-token') || '';
+const insideNogon = location.pathname.endsWith('/research/');
+const sessionKey = 'tp-token:' + location.pathname;
+let token =
+  sessionStorage.getItem(sessionKey) ||
+  (insideNogon ? '' : sessionStorage.getItem('tp-token') || '');
 let config,
   jobs = [],
   view = null,
@@ -37,7 +41,7 @@ async function request(path, options = {}, raw = false) {
   const headers = { Authorization: `Bearer ${token}`, ...options.headers };
   if (options.body && !(options.body instanceof FormData))
     headers['Content-Type'] = 'application/json';
-  const response = await fetch(path, { ...options, headers });
+  const response = await fetch(new URL(path.slice(1), document.baseURI), { ...options, headers });
   if (!response.ok) {
     let message = `Request failed (${response.status}).`;
     try {
@@ -108,7 +112,7 @@ function categoryPicker(container, current, onChange, disabled = false) {
 }
 async function connect() {
   config = await request('/v1/config');
-  sessionStorage.setItem('tp-token', token);
+  sessionStorage.setItem(sessionKey, token);
   $('access-token').value = '';
   $('login').hidden = true;
   $('shell').hidden = false;
@@ -610,7 +614,8 @@ $('login-form').addEventListener('submit', async (event) => {
   }
 });
 $('disconnect').addEventListener('click', () => {
-  sessionStorage.removeItem('tp-token');
+  sessionStorage.removeItem(sessionKey);
+  if (!insideNogon) sessionStorage.removeItem('tp-token');
   location.reload();
 });
 $('nav-jobs').addEventListener(
@@ -821,6 +826,7 @@ setInterval(async () => {
     } catch {}
   }
 }, 3000);
+if (insideNogon) $('legacy-jobs').hidden = false;
 if (token) {
   connect().catch((error) => {
     $('login-error').textContent = error.message;

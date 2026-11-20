@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Theophysics · Research control center</title>
-    <link rel="stylesheet" href="/style.css" />
-    <script type="module" src="/app.js"></script>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.js"></script>
   </head>
   <body>
     <div id="login" class="login-screen">
@@ -29,7 +29,7 @@
     </div>
     <div id="shell" hidden>
       <aside class="sidebar">
-        <a class="brand" href="/" aria-label="Theophysics home"
+        <a class="brand" href="./" aria-label="Theophysics home"
           ><span class="brand-mark">Θ</span
           ><span>THEOPHYSICS<small>RESEARCH CONTROL CENTER</small></span></a
         >
@@ -48,6 +48,9 @@
             <span aria-hidden="true">▤</span><span>Storage</span>
           </button>
         </nav>
+        <a id="legacy-jobs" class="nav-item" href="./legacy" hidden
+          >Saved Nogon jobs and receipts</a
+        >
         <div class="sidebar-note">
           <span class="online-dot"></span> Connected to your library
           <p>One canonical source.<br />Every action has a receipt.</p>
