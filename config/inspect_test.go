@@ -762,7 +762,7 @@ func TestFieldCatalogIncludesDisplayGroups(t *testing.T) {
 	wantGroups := map[string][]string{
 		"app":             {"Appearance", "Search behavior", "Access", "Logging and diagnostics", "Storage"},
 		"server":          {"Connection", "Authentication", "Storage", "Request limits", "Monitoring", "OAuth: github", "OAuth: google", "OAuth: oidc"},
-		"indexer":         {"Language and text", "Local files", "PDF extraction"},
+		"indexer":         {"Storage", "Language and text", "Local files", "PDF extraction"},
 		"crawler":         {"Crawl behavior", "Page fetching", "Requests"},
 		"semantic_search": {"Search behavior", "Embedding service", "Document chunks", "Document processing"},
 	}

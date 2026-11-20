@@ -455,6 +455,7 @@ func New(cfg *config.Config) (*Indexer, error) {
 		return nil, fmt.Errorf("store initial embedding configuration metadata: %w", err)
 	}
 	idx.disablePreviews = cfg.App.DisablePreviews
+	idx.data.compression = cfg.Indexer.Compression
 	idx.userHandling = cfg.App.UserHandling
 	idx.directories = cfg.Indexer.Directories
 	idx.maxFileSize = defaultMaxFileSize

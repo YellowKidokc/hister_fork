@@ -202,6 +202,7 @@ type Indexer struct {
 	MaxFileSize               int64        `yaml:"max_file_size_mb" mapstructure:"max_file_size_mb"`
 	Languages                 []string     `yaml:"languages" mapstructure:"languages"`
 	LanguageDetectionAccuracy string       `yaml:"language_detection_accuracy" mapstructure:"language_detection_accuracy"`
+	Compression               string       `yaml:"compression" mapstructure:"compression"`
 	PDFParser                 PDFParser    `yaml:"pdf_parser" mapstructure:"pdf_parser"`
 }
 
@@ -232,6 +233,11 @@ func (p PDFParser) Validate() error {
 }
 
 const (
+	CompressionGzip = "gzip"
+	CompressionZstd = "zstd"
+)
+
+const (
 	LanguageDetectionAccuracyHigh = "high"
 	LanguageDetectionAccuracyLow  = "low"
 )
@@ -255,6 +261,11 @@ func (e validationError) Unwrap() error { return e.field }
 // Validate checks file and detector settings without loading language models.
 // Errors expose a safe FieldError through errors.As.
 func (i Indexer) Validate() error {
+	switch i.Compression {
+	case "", CompressionGzip, CompressionZstd:
+	default:
+		return FieldError{Path: "indexer.compression", Code: "invalid_configuration", Message: "Choose gzip or zstd compression."}
+	}
 	const maxFileSize int64 = math.MaxInt64 / bytesPerMiB
 	if i.MaxFileSize < 1 || i.MaxFileSize > maxFileSize {
 		return FieldError{
@@ -932,6 +943,7 @@ func CreateDefaultConfig() *Config {
 			KeepStopwords:             false,
 			MaxFileSize:               1,
 			LanguageDetectionAccuracy: LanguageDetectionAccuracyLow,
+			Compression:               CompressionGzip,
 			PDFParser:                 PDFParser{Timeout: 30},
 		},
 		Crawler: CrawlerConfig{
