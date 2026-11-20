@@ -510,6 +510,13 @@ func FieldCatalog() []FieldMetadata {
 			Schema:      SettingSchema{Sensitivity: "none"},
 		},
 		{
+			Path:        "app.visual_archives",
+			Group:       groupSearchBehavior,
+			Label:       "Visual page archives",
+			Description: "Allow explicit screenshot captures of indexed web pages from the browser extension.",
+			Schema:      SettingSchema{Sensitivity: "none"},
+		},
+		{
 			Path:        "app.access_token",
 			Group:       groupAccess,
 			Label:       "Access token",

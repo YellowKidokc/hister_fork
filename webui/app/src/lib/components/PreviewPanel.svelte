@@ -1,5 +1,6 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <script lang="ts">
+  import VisualArchive from './VisualArchive.svelte';
   import VideoPreview from './VideoPreview.svelte';
   import IssuePreview from './IssuePreview.svelte';
   import CodePreview, { parseCodePreview, type CodePreviewData } from './CodePreview.svelte';
@@ -37,6 +38,7 @@
     Video,
   } from '@lucide/svelte';
   import { onMount, untrack } from 'svelte';
+  import { publicConfig as archiveConfig } from '#lib/stores.js';
 
   interface Props {
     url: string;
@@ -586,6 +588,11 @@
           {/if}
         </h2>
       </div>
+      {#if $archiveConfig?.visualArchivesEnabled && !viewingVersion && documentDetails?.type === 'web' && documentDetails.user_id === ($archiveConfig.userId ?? 0)}
+        {#key documentId || url}
+          <VisualArchive endpoint={documentRequestUrl('/document/visual', url, documentId)} />
+        {/key}
+      {/if}
       {#if showDocumentDetails && hasDocumentDetails}
         <div
           id="preview-document-details"
