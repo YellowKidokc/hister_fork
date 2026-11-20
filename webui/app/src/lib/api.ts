@@ -17,6 +17,7 @@ export interface AppConfig {
   authenticated: boolean;
   public: boolean;
   canWrite: boolean;
+  rerankEnabled?: boolean;
   canConfigure: boolean;
   historyEnabled: boolean;
   username?: string;
