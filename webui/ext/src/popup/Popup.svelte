@@ -48,6 +48,9 @@
     setMessage('success', msg);
   }
 
+  let visualArchivesEnabled = $state(false);
+  let capturingArchive = $state(false);
+
   let authCheckPassed = $state<boolean | null>(null);
 
   function isAuthenticated(userID: number): boolean {
@@ -82,6 +85,17 @@
           setProfileUserID(0);
         }
         authCheckPassed = true;
+        visualArchivesEnabled = false;
+        try {
+          const config = await fetchAPI(authURL + 'api/config', {
+            customHeaders,
+            accessToken: token,
+          });
+          if (config.ok)
+            visualArchivesEnabled = (await config.json()).visualArchivesEnabled === true;
+        } catch {
+          // The rest of the popup remains available if config cannot be read.
+        }
         return authCheckPassed;
       })
       .catch(() => {
@@ -260,6 +274,46 @@
       }
     } catch (error) {
       setErrorMessage((error as Error).message ?? 'Failed to read browser cookies.');
+    }
+  }
+
+  async function saveVisualArchive() {
+    capturingArchive = true;
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab?.id || tab.incognito || tab.url !== sourceTabURL || !/^https?:\/\//i.test(tab.url)) {
+        throw new Error('Select a regular web page before saving a visual archive.');
+      }
+      const pageURL = await getTabPageURL(tab.id, tab.url);
+      const state = await chrome.runtime.sendMessage({
+        action: 'getTabState',
+        tabId: tab.id,
+        url: tab.url,
+      });
+      if (state?.isSensitive) throw new Error('This page was flagged as sensitive.');
+      const image = await chrome.tabs.captureVisibleTab(tab.windowId, {
+        format: 'jpeg',
+        quality: 85,
+      });
+      const [current] = await chrome.tabs.query({ active: true, windowId: tab.windowId });
+      if (
+        current?.id !== tab.id ||
+        current.url !== tab.url ||
+        (await getTabPageURL(tab.id, tab.url)) !== pageURL
+      ) {
+        throw new Error('The page changed before the screenshot could be saved.');
+      }
+      const base = url.endsWith('/') ? url : url + '/';
+      const endpoint = base + 'api/document/visual?' + new URLSearchParams({ url: pageURL });
+      const response = await fetchAPI(endpoint, { body: { image }, customHeaders, accessToken });
+      if (response.status === 404)
+        throw new Error('Index this page first to save a visual archive.');
+      if (!response.ok) throw new Error('Could not save the visual archive.');
+      setSuccessMessage('Visual archive saved.');
+    } catch (error) {
+      setErrorMessage((error as Error).message);
+    } finally {
+      capturingArchive = false;
     }
   }
 
@@ -514,6 +568,19 @@
           </Tooltip.Provider>
         </div>
       </div>
+
+      {#if visualArchivesEnabled && tabURL && !isPageSkipped && /^https?:\/\//i.test(sourceTabURL)}
+        <div class="border-brutal-border border-b-[3px] px-5 py-4">
+          <Button
+            variant="outline"
+            class="w-full"
+            onclick={saveVisualArchive}
+            disabled={capturingArchive}
+          >
+            {capturingArchive ? 'Saving visual archive…' : 'Save visible page as archive'}
+          </Button>
+        </div>
+      {/if}
 
       <!-- Disable indexing section -->
       {#if tabURL && !isPageSkipped}

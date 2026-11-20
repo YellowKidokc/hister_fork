@@ -1225,6 +1225,18 @@ For directories watched by the server, `delete_on_remove: true` makes deleting o
 
 No reindex is required when adding or removing files. Files are detected and indexed automatically. After making directory filters more restrictive, run `nogon cleanup` to remove indexed local documents that no longer match the configuration. Cleanup compares indexed paths with the configuration and does not scan or read the filesystem.
 
+## Saved page compression
+
+Nogon uses gzip for newly stored HTML and favicons by default. Set
+`indexer.compression` to `zstd` to write new blobs with Zstandard. Both
+formats can coexist in one data folder. Changing the setting leaves
+previously stored files in their original format.
+
+```yaml
+indexer:
+  compression: zstd
+```
+
 ## Disable Previews
 
 By default, Nogon stores the full HTML content of every indexed page on disk and makes it available in a split-pane preview panel in the search and history UI. Setting `disable_previews: true` turns this off completely:
@@ -1240,6 +1252,17 @@ app:
 ```
 
 > **Note**: Favicons are unaffected by this setting and are always stored.
+
+## Strip images from saved pages
+
+Set `app.strip_images` to remove image elements from newly captured page HTML.
+Nogon still indexes the extracted text and saves the site's favicon. Existing
+saved HTML remains readable.
+
+```yaml
+app:
+  strip_images: true
+```
 
 ## Access Token
 

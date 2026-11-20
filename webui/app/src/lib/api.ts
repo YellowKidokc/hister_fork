@@ -17,6 +17,10 @@ export interface AppConfig {
   authenticated: boolean;
   public: boolean;
   canWrite: boolean;
+  aiSummaryEnabled?: boolean;
+  visualArchivesEnabled?: boolean;
+  rerankEnabled?: boolean;
+  unifiedResearch?: boolean;
   canConfigure: boolean;
   historyEnabled: boolean;
   username?: string;

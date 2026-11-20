@@ -5,7 +5,7 @@ This sets up three containers as one Portainer stack:
 | Container           | What it is                                         | Address                   |
 | ------------------- | -------------------------------------------------- | ------------------------- |
 | `Nogon`             | The search engine, homepage groups, `/research`    | http://192.168.1.177:4433 |
-| `Nogon-Research`    | The Theophysics research control center            | http://192.168.1.177:4444 |
+| `Nogon-Research`    | The Theophysics research control center            | internal only             |
 | `Nogon-Research-DB` | PostgreSQL for the research center (not reachable) | internal only             |
 
 Written for a DS923+ with the stack on **Volume 2**. Change `/volume2` everywhere if yours differs.
@@ -42,7 +42,7 @@ The containers run as your Synology user so they can write to the folders. The f
 | Field                | Value                                         |
 | -------------------- | --------------------------------------------- |
 | Repository URL       | `https://github.com/YellowKidokc/hister_fork` |
-| Repository reference | `refs/heads/master`                           |
+| Repository reference | `refs/heads/codex/preinstall`                           |
 | Compose path         | `deploy/synology/compose.yaml`                |
 
 Under **Environment variables**, add:
@@ -57,7 +57,11 @@ Under **Environment variables**, add:
 | `NOGON_TOKEN`    | optional login token for Nogon; empty means no login          |
 | `TZ`             | `America/Chicago`                                             |
 
-Optional: `URL_HOSTS` (sites the research center may download from) and, for local AI that only runs when you ask, `AI_BASE_URL` (for Ollama: `http://192.168.1.177:11434/v1`) and `AI_MODEL`.
+Optional stack variables:
+
+- `URL_HOSTS` lists the hosts the research center may import.
+- `AI_BASE_URL` and `AI_MODEL` enable on-demand summaries, chat, and classification. For Ollama, use an address reachable from the containers, such as `http://192.168.1.177:11434/v1`. Set `AI_KEY` only if your provider requires one.
+- `RERANK_ENDPOINT` enables the **Rerank results** action. Set the full endpoint, including `/v1/rerank`. `RERANK_MODEL` and `RERANK_KEY` are optional provider settings.
 
 For random values, open any terminal and run `openssl rand -hex 24`, or use a password manager.
 
@@ -66,13 +70,19 @@ Click **Deploy the stack**. The first deploy builds both images from the code on
 ## 5. Check it
 
 - http://192.168.1.177:4433 should show the Nogon homepage, with your **Groups** if you copied old data.
-- http://192.168.1.177:4433/research should show the research page with **Import links**.
-- http://192.168.1.177:4444 should show the research control center (log in with `RESEARCH_TOKEN`).
+- Open http://192.168.1.177:4433/research for link lists, file and folder uploads, classification, and review. Sign in with `RESEARCH_TOKEN`.
+- Earlier Nogon research jobs and link import receipts remain available under **Saved Nogon jobs and receipts**. The original index and databases stay in place.
 - Point the browser extension at `http://192.168.1.177:4433` (and enter `NOGON_TOKEN` if you set one).
+
+## Optional capture settings
+
+In Nogon’s settings, enable **Strip images from saved pages**, **Visual page archives**, **YouTube video downloads**, or **Defuddle** as needed. Visual archives require the updated extension and capture the visible part of a page when you choose **Save visible page as archive**. YouTube video downloads save a compatible MP4 when requested.
+
+Set **Saved page compression** to Zstandard to use it for new HTML and favicon files. Older gzip files remain readable. Leave gzip selected if you also use an older Nogon version to read the same folder.
 
 ## Updating later
 
-When new code is pushed to `master`: Portainer → Stacks → `nogon` → **Pull and redeploy**. Your data folders are not touched. Portainer can also do this automatically (GitOps updates → polling).
+When new code is pushed to the repository reference configured in Portainer: Portainer → Stacks → `nogon` → **Pull and redeploy**. Your data folders are not touched. Portainer can also do this automatically (GitOps updates → polling).
 
 ## If something goes wrong
 
