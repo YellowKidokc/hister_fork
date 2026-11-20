@@ -31,6 +31,7 @@ th, td { text-align:left; padding:5px 6px; border-bottom:1px solid var(--line); 
 code { font-size:12px; }
 .hit { padding:8px 0; border-bottom:1px solid var(--line); } .hit:last-child { border:0; }
 .hidden { display:none; }
+body[data-intake-readonly] :is(form#newjob, #linkform, #drop) { display:none; }
 </style>
 </head>
 <body>
@@ -53,7 +54,7 @@ code { font-size:12px; }
   <ul class="jobs" id="linkimports"></ul>
 </section>
 <section id="newjob">
-  <h2>New job</h2>
+  <h2>Jobs</h2>
   <form id="newjob" class="row">
     <input type="text" id="jobname" placeholder="Job name" maxlength="200" required>
     <input type="text" id="jobdesc" placeholder="Description (optional)">

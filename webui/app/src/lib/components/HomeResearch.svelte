@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
+  import { publicConfig } from '#lib/stores.js';
   import { apiFetch } from '#lib/api.js';
   import { Tag, Link2, FolderUp, Video, Sparkles } from '@lucide/svelte';
 
@@ -46,29 +47,31 @@
     groupsLoaded = true;
   });
 
-  const sources = [
+  const sources = $derived([
     {
       title: 'Upload a list of links',
       detail: 'Paste links or a .txt, .csv or Excel list',
-      href: `${researchPage}#linkimport`,
+      href: $publicConfig?.unifiedResearch ? `${researchPage}/` : `${researchPage}#linkimport`,
       icon: Link2,
       color: 'text-nogon-indigo border-nogon-indigo bg-nogon-indigo/5 hover:bg-nogon-indigo/10',
     },
     {
       title: 'Upload files or a folder',
       detail: 'PDFs, Markdown, Word, HTML, code',
-      href: `${researchPage}#newjob`,
+      href: $publicConfig?.unifiedResearch ? `${researchPage}/` : `${researchPage}#newjob`,
       icon: FolderUp,
       color: 'text-nogon-teal border-nogon-teal bg-nogon-teal/5 hover:bg-nogon-teal/10',
     },
     {
       title: 'YouTube transcripts',
       detail: 'Channels and playlists via the YouTube scripts',
-      href: `${researchPage}#youtube`,
+      href: $publicConfig?.unifiedResearch
+        ? `${researchPage}/legacy#youtube`
+        : `${researchPage}#youtube`,
       icon: Video,
       color: 'text-nogon-coral border-nogon-coral bg-nogon-coral/5 hover:bg-nogon-coral/10',
     },
-  ];
+  ]);
 </script>
 
 {#if groupsLoaded && groups.length > 0}

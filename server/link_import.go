@@ -180,6 +180,9 @@ func collectImportLinks(r *http.Request) ([]string, error) {
 }
 
 func serveStartLinkImport(c *webContext) {
+	if legacyIntakeClosed(c) {
+		return
+	}
 	if err := c.Request.ParseMultipartForm(linkImportMaxBytes); err != nil && !errors.Is(err, http.ErrNotMultipart) {
 		http.Error(c.Response, "invalid upload: "+err.Error(), http.StatusBadRequest)
 		return

@@ -424,6 +424,7 @@ func serveConfig(c *webContext) {
 		Authenticated        bool                      `json:"authenticated"`
 		DiagnosticsAvailable bool                      `json:"diagnosticsAvailable"`
 		Public               bool                      `json:"public"`
+		UnifiedResearch      bool                      `json:"unifiedResearch,omitempty"`
 		CanWrite             bool                      `json:"canWrite"`
 		CanConfigure         bool                      `json:"canConfigure"`
 		HistoryEnabled       bool                      `json:"historyEnabled"`
@@ -470,6 +471,7 @@ func serveConfig(c *webContext) {
 		Authenticated:        authenticated,
 		DiagnosticsAvailable: true,
 		Public:               c.Config.App.Public,
+		UnifiedResearch:      canWrite(c) && researchIntakeUpstream(c.Config) != nil,
 		CanWrite:             canWrite(c),
 		CanConfigure:         canConfigure(c),
 		HistoryEnabled:       historyEnabled(c),
