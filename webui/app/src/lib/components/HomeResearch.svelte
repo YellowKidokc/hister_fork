@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
   import { apiFetch } from '#lib/api.js';
-  import { Tag, Link2, FolderUp, Video, Sparkles } from '@lucide/svelte';
+  import { Tag, Link2, FolderUp, Video } from '@lucide/svelte';
 
   interface Props {
     canWrite: boolean;
@@ -130,16 +130,6 @@
           </span>
         </a>
       {/each}
-      <div
-        class="border-brutal-border text-text-brand-muted flex items-center gap-3 border-[2px] border-dashed px-3 py-3"
-        title="Coming next: ask the AI to sort a group or a search, only when you ask it to"
-      >
-        <Sparkles class="size-5 shrink-0" />
-        <span class="min-w-0">
-          <span class="font-outfit block font-bold">Reclassify with AI</span>
-          <span class="font-inter block text-xs">Coming next · runs only when you ask</span>
-        </span>
-      </div>
     </div>
   </section>
 {/if}

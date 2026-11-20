@@ -456,7 +456,7 @@ func serveConfig(c *webContext) {
 	for name := range c.Config.Server.OAuth {
 		oauthProviders = append(oauthProviders, name)
 	}
-	summaryEndpoint, _ := summaryService()
+	summaryEndpoint, _ := chatService()
 	resp := configResponse{
 		BaseURL:              c.Config.BaseURL(""),
 		BasePath:             c.Config.BasePathPrefix(),
