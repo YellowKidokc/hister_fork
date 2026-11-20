@@ -163,6 +163,7 @@ var fields = []FieldDefinition{
 var facets = []FacetDefinition{
 	{Name: "domains", Label: "Domains", QueryField: "domain", Kind: FacetKindTerms, Icon: "globe", DefaultSize: 10},
 	{Name: "languages", Label: "Languages", QueryField: "language", Kind: FacetKindTerms, Icon: "globe", DefaultSize: 10},
+	{Name: "labels", Label: "Labels", QueryField: "label", Kind: FacetKindTerms, Icon: "tag", DefaultSize: 30},
 	{Name: "types", Label: "Type", QueryField: "type", Kind: FacetKindNumericRanges, Icon: "tag", DefaultSize: 3},
 	{Name: "visits", Label: "Visits", QueryField: "visits", Kind: FacetKindNumericRanges, Icon: "eye", DefaultSize: 4},
 	{Name: "updated", Label: "Updated", QueryField: "updated", Kind: FacetKindDateRanges, Icon: "calendar", DefaultSize: 5},

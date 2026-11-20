@@ -52,7 +52,7 @@ code { font-size:12px; }
   <div id="linkprogress"></div>
   <ul class="jobs" id="linkimports"></ul>
 </section>
-<section>
+<section id="newjob">
   <h2>New job</h2>
   <form id="newjob" class="row">
     <input type="text" id="jobname" placeholder="Job name" maxlength="200" required>
@@ -77,6 +77,14 @@ code { font-size:12px; }
   <div id="results"></div>
   <h2 style="margin-top:14px">Source receipts</h2>
   <table><thead><tr><th>File</th><th>SHA-256</th><th>Size</th><th>Status</th></tr></thead><tbody id="sources"></tbody></table>
+</section>
+<section id="youtube">
+  <h2>YouTube transcripts</h2>
+  <p class="muted" style="margin-top:0">Transcripts come in through the scripts in <code>integrations/youtube</code>. On the machine that has them, grab a channel or playlist, then send the results to Nogon with a label:</p>
+  <pre style="white-space:pre-wrap;font-size:12px;background:var(--bg);padding:8px;border-radius:6px">pip install -r integrations/youtube/requirements.txt
+python integrations/youtube/ytgrab.py --help
+python integrations/youtube/sync_hister.py --help</pre>
+  <p class="muted">Or paste YouTube video links into <a href="#linkimport">Import links</a> above: Nogon's yt-dlp extractor saves title, description and chapters (and subtitles when <code>fetch_subtitles</code> is on).</p>
 </section>
 </main>
 <script>
