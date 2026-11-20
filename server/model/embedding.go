@@ -5,6 +5,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -20,7 +21,7 @@ const (
 
 // EmbeddingJob is a durable, deduplicated request to embed the latest indexed
 // version of a document. Completed jobs are deleted. Failed jobs are retained
-// with their last error until new document contents enqueue them again. Dirty
+// with their last error until content changes or an administrator requests a retry. Dirty
 // records indicate that the document changed while a worker was processing it.
 type EmbeddingJob struct {
 	DocID       string    `gorm:"primaryKey;type:text"`
@@ -273,6 +274,29 @@ func DeleteEmbeddingJob(docID string) error {
 		return err
 	}
 	return db.Where("doc_id = ?", docID).Delete(&EmbeddingJob{}).Error
+}
+
+// RequeueFailedEmbeddingJobs resets only the oldest failed jobs, at the
+// operator's request. Pending and active jobs keep their current attempts.
+func RequeueFailedEmbeddingJobs(ctx context.Context, limit int) (int64, error) {
+	db, err := embeddingDB()
+	if err != nil {
+		return 0, err
+	}
+	if limit <= 0 {
+		return 0, nil
+	}
+	db = db.WithContext(ctx)
+	failed := db.Model(&EmbeddingJob{}).Select("doc_id").Where("status = ?", EmbeddingJobFailed).
+		Order("updated_at, doc_id").Limit(limit)
+	now := time.Now().UTC()
+	result := db.Model(&EmbeddingJob{}).
+		Where("status = ? AND doc_id IN (?)", EmbeddingJobFailed, failed).
+		Updates(map[string]any{
+			"status": EmbeddingJobPending, "dirty": false, "attempts": 0,
+			"available_at": now, "updated_at": now,
+		})
+	return result.RowsAffected, result.Error
 }
 
 // ResetInProgressEmbeddingJobs recovers jobs interrupted by process shutdown.

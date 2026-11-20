@@ -106,6 +106,15 @@ func init() {
 			Description: "Prometheus metrics endpoint for server monitoring. Returns metrics in Prometheus exposition format. Enabled via the server.metrics configuration toggle.",
 		},
 		{
+			Name:         "Retry failed embeddings",
+			Path:         "/api/embeddings/retry",
+			Method:       POST,
+			CSRFRequired: true,
+			AdminOnly:    true,
+			Handler:      serveRetryEmbeddings,
+			Description:  "Requeue up to 100 failed embedding jobs on request",
+		},
+		{
 			Name:        "Diagnostics",
 			Path:        "/api/diagnostics",
 			Method:      GET,
