@@ -805,11 +805,15 @@ func serveAdd(c *webContext) {
 		serve500(c)
 		return
 	}
-	d := &document.Document{}
+	req := &struct {
+		document.Document
+		visitTimestamp
+	}{}
+	d := &req.Document
 	if strings.Contains(c.Request.Header.Get("Content-Type"), "json") {
 		maxBodyBytes := c.Config.Server.MaxBatchBodyBytes()
 		c.Request.Body = http.MaxBytesReader(c.Response, c.Request.Body, maxBodyBytes)
-		if !decodeRequestJSON(c, d) {
+		if !decodeRequestJSON(c, req) {
 			return
 		}
 	} else {
@@ -820,6 +824,7 @@ func serveAdd(c *webContext) {
 		d.URL = f.Get("url")
 		d.Title = f.Get("title")
 		d.Text = f.Get("text")
+		req.Visited, _ = strconv.ParseInt(f.Get("visited"), 10, 64)
 	}
 	if status, err := prepareDocumentSubmission(c, d); err != nil {
 		http.Error(c.Response, err.Error(), status)
@@ -845,6 +850,7 @@ func serveAdd(c *webContext) {
 		serve500(c)
 		return
 	}
+	recordDocumentVisit(d, req.time())
 	if existingDoc != nil {
 		newDoc := c.Indexer.GetByURLAndUser(d.URL, d.UserID)
 		if newDoc != nil {
@@ -986,6 +992,9 @@ func serveUpdateDocuments(c *webContext) {
 		for _, change := range result.OwnershipChanges {
 			if err := model.MoveDocumentVersions(change.URL, change.FromUserID, change.ToUserID); err != nil {
 				log.Warn().Err(err).Str("url", change.URL).Msg("failed to move document versions to the new owner")
+			}
+			if err := model.MoveVisits(change.URL, change.FromUserID, change.ToUserID); err != nil {
+				log.Warn().Err(err).Msg("failed to move document visits to the new owner")
 			}
 		}
 	}
@@ -1638,6 +1647,11 @@ func servePreview(c *webContext) {
 	if versionCount, err := model.CountDocumentVersions(u, doc.UserID); err == nil && versionCount > 0 {
 		payload.VersionCount = versionCount
 	}
+	if canWrite(c) && (!c.Config.App.UserHandling || doc.UserID == c.UserID || c.IsAdmin) {
+		if count, err := model.CountVisits(doc.URL, doc.UserID); err == nil {
+			payload.VisitCount = &count
+		}
+	}
 	if meta := doc.GetPreviewMeta(); meta != nil {
 		payload.Meta = meta
 	}
@@ -1995,11 +2009,7 @@ func serveDelete(c *webContext) {
 	if req.DryRun {
 		count, err = c.Indexer.CountByQuery(req.Query, userID)
 	} else {
-		count, err = c.Indexer.DeleteByQuery(req.Query, userID, func(url string, uid uint) {
-			if err := model.DeleteHistoryURL(uid, url); err != nil {
-				log.Warn().Err(err).Str("url", url).Msg("failed to delete history for deleted document")
-			}
-		})
+		count, err = c.Indexer.DeleteByQuery(req.Query, userID, deleteDocumentRecords)
 	}
 	if err != nil {
 		if errors.Is(err, indexer.ErrEmptyFilter) || errors.Is(err, querybuilder.ErrInvalidQuery) {
@@ -2356,11 +2366,7 @@ func serveDeleteUser(c *webContext) {
 	purge := params.Get("purge") == "true"
 	var count int
 	if purge {
-		count, err = c.Indexer.DeleteByQuery("*", &user.ID, func(url string, uid uint) {
-			if err := model.DeleteHistoryURL(uid, url); err != nil {
-				log.Warn().Err(err).Str("url", url).Msg("failed to delete history for deleted document")
-			}
-		})
+		count, err = c.Indexer.DeleteByQuery("*", &user.ID, deleteDocumentRecords)
 	} else {
 		count, err = c.Indexer.CountByQuery("*", &user.ID)
 	}
@@ -2401,6 +2407,7 @@ func userDeletionFailed(c *webContext, err error) bool {
 type batchOp struct {
 	Op string `json:"op"`
 	document.Document
+	visitTimestamp
 }
 
 type batchOpResult struct {
@@ -2454,6 +2461,8 @@ func serveBatch(c *webContext) {
 	defer batch.Discard()
 	uid := targetUserID(c)
 	results := make([]batchOpResult, len(req.Ops))
+	var visits []pendingVisit
+	deletions := make(map[string]string)
 	for i, op := range req.Ops {
 		switch op.Op {
 		case batchOpAdd:
@@ -2473,6 +2482,7 @@ func serveBatch(c *webContext) {
 					results[i] = batchOpResult{Status: http.StatusInternalServerError, Error: "internal error"}
 				}
 			} else {
+				visits = append(visits, pendingVisit{d, op.time()})
 				results[i] = batchOpResult{Status: http.StatusCreated}
 			}
 		case batchOpDel:
@@ -2481,10 +2491,8 @@ func serveBatch(c *webContext) {
 				continue
 			}
 			id := document.GetDocID(uid, op.URL)
-			if d := c.Indexer.GetByDocID(id); d != nil {
-				if err := model.DeleteHistoryURL(d.UserID, d.URL); err != nil {
-					log.Warn().Err(err).Str("url", d.URL).Msg("failed to delete history for batch deleted document")
-				}
+			if existing := c.Indexer.GetByDocID(id); existing != nil {
+				deletions[id] = existing.URL
 			}
 			batch.Delete(id)
 			results[i] = batchOpResult{Status: http.StatusOK}
@@ -2510,6 +2518,16 @@ func serveBatch(c *webContext) {
 		return
 	}
 
+	for id, u := range deletions {
+		if c.Indexer.GetByDocID(id) == nil {
+			deleteDocumentRecords(u, uid)
+		}
+	}
+	for _, visit := range visits {
+		if c.Indexer.GetByDocID(document.GetDocID(visit.doc.UserID, visit.doc.URL)) != nil {
+			recordDocumentVisit(visit.doc, visit.at)
+		}
+	}
 	log.Debug().Int("ops", len(req.Ops)).Msg("batch request processed")
 	c.JSON(batchResponse{Results: results})
 }

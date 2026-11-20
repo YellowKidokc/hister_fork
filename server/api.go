@@ -763,6 +763,22 @@ func init() {
 			},
 		},
 		{
+			Name:        "Document visit timeline",
+			Path:        "/api/visits",
+			Method:      GET,
+			NoStore:     true,
+			Handler:     serveVisits,
+			Description: "List recorded visits for an indexed page, newest first",
+		},
+		{
+			Name:         "Delete document visit",
+			Path:         "/api/visits/delete",
+			Method:       POST,
+			CSRFRequired: true,
+			Handler:      serveDeleteVisit,
+			Description:  "Delete one recorded visit by ID",
+		},
+		{
 			Name:         "Add history item",
 			Path:         "/api/history",
 			Method:       POST,
