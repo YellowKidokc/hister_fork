@@ -8,7 +8,8 @@
   import * as Tooltip from '@nogon/components/ui/tooltip';
   import * as Dialog from '@nogon/components/ui/dialog';
   import { TriangleAlert } from '@lucide/svelte';
-  import { fetchConfig, resetConfig } from '#lib/api.js';
+  import { apiFetch, fetchConfig, resetConfig } from '#lib/api.js';
+  import { publicConfig } from '#lib/stores.js';
   import { redirectToAuth } from '#lib/auth-navigation.js';
   import SettingsField from '#lib/components/SettingsField.svelte';
   import SettingsAccess from '#lib/components/SettingsAccess.svelte';
@@ -601,6 +602,29 @@
       finish();
     }
   }
+
+  let retryingEmbeddings = $state(false);
+  let retryEmbeddingMessage = $state('');
+
+  async function retryFailedEmbeddings() {
+    retryingEmbeddings = true;
+    retryEmbeddingMessage = '';
+    try {
+      const response = await apiFetch('/embeddings/retry', {
+        method: 'POST',
+        redirectOnForbidden: false,
+      });
+      if (!response.ok) throw new Error();
+      const result: { queued: number } = await response.json();
+      retryEmbeddingMessage = result.queued
+        ? `Queued ${result.queued} failed embedding job${result.queued === 1 ? '' : 's'}.`
+        : 'No failed embedding jobs to retry.';
+    } catch {
+      retryEmbeddingMessage = 'Could not retry failed embedding jobs.';
+    } finally {
+      retryingEmbeddings = false;
+    }
+  }
 </script>
 
 <svelte:head><title>Settings | Nogon</title></svelte:head>
@@ -623,6 +647,22 @@
         Configure appearance, search behavior, logging, indexing, crawling, extraction and web
         shortcuts. Other settings are shown for reference.
       </p>
+      {#if settings && !denied && !access && $publicConfig?.canConfigure && $publicConfig?.semanticEnabled}
+        <div class="my-2 flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onclick={retryFailedEmbeddings}
+            disabled={retryingEmbeddings || busy}
+          >
+            {retryingEmbeddings ? 'Queuing retries…' : 'Retry failed embeddings'}
+          </Button>
+          {#if retryEmbeddingMessage}<p class="text-sm" role="status">
+              {retryEmbeddingMessage}
+            </p>{/if}
+        </div>
+      {/if}
       {#if problem}<div role="alert" class="text-nogon-rose my-2 text-sm">
           <p>{problem}{needsReload && dirty ? ' Your draft is still here.' : ''}</p>
           {#each errors.filter((error) => !error.path || !categories.includes(error.path.split('.')[0])) as error}<p
