@@ -354,6 +354,7 @@ type MultiBatch struct {
 	orphanedFaviconKeys []string
 	embeddingIDs        map[string]struct{}
 	deletedIDs          map[string]struct{}
+	stagedDocuments     map[string]struct{}
 	incrementAddCount   bool
 	allowMissingVectors bool
 	stagedMetrics       []indexingMetric
@@ -1331,6 +1332,9 @@ func (i *Indexer) prepareDocumentWrite(ctx context.Context, d *document.Document
 		return nil, nil
 	}
 	state := i.getStoredDocumentState(d.ID())
+	if d.SummaryOnly && state.found {
+		return nil, nil
+	}
 	// Resolve the final URL and owner before looking up a saved correction.
 	// Resubmissions cannot replace a pin; the update API changes or clears it.
 	if state.languageOverride != "" {
@@ -1775,6 +1779,10 @@ func (b *MultiBatch) applyDocumentWrite(d *document.Document, plan documentWrite
 			plan.data.release()
 		}
 	}()
+	if _, exists := b.stagedDocuments[d.ID()]; d.SummaryOnly && exists {
+		plan.data.release()
+		return nil
+	}
 	delete(b.deletedIDs, d.ID())
 	if plan.needsEmbedding {
 		if b.indexer.embeddingWorkers > 0 {
@@ -1791,6 +1799,10 @@ func (b *MultiBatch) applyDocumentWrite(d *document.Document, plan documentWrite
 	if err := b.getOrCreateBatch(plan.target.Name(), plan.target).Index(d.ID(), d); err != nil {
 		return err
 	}
+	if b.stagedDocuments == nil {
+		b.stagedDocuments = make(map[string]struct{})
+	}
+	b.stagedDocuments[d.ID()] = struct{}{}
 	for _, key := range plan.oldHTMLKeys {
 		if key != plan.newHTMLKey {
 			b.orphanedHTMLKeys = append(b.orphanedHTMLKeys, key)
@@ -1806,6 +1818,7 @@ func (b *MultiBatch) applyDocumentWrite(d *document.Document, plan documentWrite
 }
 
 func (b *MultiBatch) Delete(id string) {
+	delete(b.stagedDocuments, id)
 	oldHTMLKeys, oldFaviconKeys := b.indexer.getDocKeysByID(id)
 	delete(b.embeddingIDs, id)
 	b.deletedIDs[id] = struct{}{}
@@ -1819,6 +1832,7 @@ func (b *MultiBatch) Delete(id string) {
 // Discard releases pending blobs and clears staged operations. Call it when a
 // batch is abandoned before Save. The batch can be reused after Discard or Save.
 func (b *MultiBatch) Discard() {
+	clear(b.stagedDocuments)
 	for _, data := range b.pendingData {
 		data.release()
 	}
