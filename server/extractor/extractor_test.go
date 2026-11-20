@@ -472,6 +472,7 @@ func TestDefaultRegistryOrder(t *testing.T) {
 		"Notion",
 		"Ytdlp",
 		"ChatGPT",
+		"Defuddle",
 		"Readability",
 		"Basic",
 	}

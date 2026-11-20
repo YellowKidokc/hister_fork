@@ -12,6 +12,7 @@ import (
 	"github.com/asciimoo/nogon/config"
 	"github.com/asciimoo/nogon/server/extractor/extractors/bluesky"
 	"github.com/asciimoo/nogon/server/extractor/extractors/chatgpt"
+	"github.com/asciimoo/nogon/server/extractor/extractors/defuddle"
 	"github.com/asciimoo/nogon/server/extractor/extractors/discourse"
 	"github.com/asciimoo/nogon/server/extractor/extractors/embeddedvideo"
 	"github.com/asciimoo/nogon/server/extractor/extractors/github"
@@ -76,6 +77,7 @@ func DefaultExtractors() []Extractor {
 		&notion.NotionExtractor{},
 		&ytdlp.YtdlpExtractor{},
 		&chatgpt.ChatGPTExtractor{},
+		&defuddle.DefuddleExtractor{},
 		&readabilityExtractor{},
 		&basicExtractor{},
 	}
