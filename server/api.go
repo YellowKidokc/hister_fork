@@ -573,6 +573,15 @@ func init() {
 			},
 		},
 		{
+			Name:         "Rerank search results",
+			Path:         "/api/rerank",
+			Method:       POST,
+			CSRFRequired: true,
+			NoStore:      true,
+			Handler:      serveRerank,
+			Description:  "Rerank selected indexed results when requested",
+		},
+		{
 			Name:         "Update documents",
 			Path:         "/api/update",
 			Method:       POST,

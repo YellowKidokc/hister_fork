@@ -116,6 +116,7 @@
     authenticated: boolean;
     public: boolean;
     canWrite: boolean;
+    rerankEnabled?: boolean;
     historyEnabled: boolean;
     search: SearchCapabilities;
   }
@@ -463,6 +464,39 @@
     }),
   );
 
+  let rerank = $state<{ search: string; ids: string[] } | null>(null);
+  let rerankBusy = $state(false);
+  let rerankError = $state('');
+  const rerankIDs = $derived(mergedResults.flatMap((r) => (r.id ? [r.id] : [])).slice(0, 30));
+  const activeRerank = $derived(rerank?.search === currentSearchMessage ? rerank : null);
+  const orderedResults = $derived.by(() => {
+    if (!activeRerank) return mergedResults;
+    const order = new Map(activeRerank.ids.map((id, index) => [id, index]));
+    return [...mergedResults].sort(
+      (a, b) => (order.get(a.id ?? '') ?? order.size) - (order.get(b.id ?? '') ?? order.size),
+    );
+  });
+
+  async function rerankResults() {
+    const search = currentSearchMessage;
+    rerankBusy = true;
+    rerankError = '';
+    try {
+      const response = await apiFetch('/rerank', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, ids: rerankIDs }),
+      });
+      if (!response.ok) throw new Error();
+      const result = await response.json();
+      if (search === currentSearchMessage) rerank = { search, ids: result.ids };
+    } catch {
+      if (search === currentSearchMessage) rerankError = 'Could not rerank these results.';
+    } finally {
+      rerankBusy = false;
+    }
+  }
+
   const historyLen = $derived((lastResults?.history as any)?.length || 0);
   const docsLen = $derived(mergedResults.length);
   const totalResults = $derived(historyLen + docsLen);
@@ -479,7 +513,11 @@
       isPinned: r.pinned ?? false,
       isHistoryResult: true,
     })),
-    ...mergedResults.map((r): DisplayResult => ({ ...r, isPinned: false, isHistoryResult: false })),
+    ...orderedResults.map((r): DisplayResult => ({
+      ...r,
+      isPinned: false,
+      isHistoryResult: false,
+    })),
   ]);
   const panelResult = $derived(
     displayResults.find(
@@ -1599,6 +1637,7 @@
         authenticated: appConfig.authenticated,
         public: appConfig.public,
         canWrite: appConfig.canWrite,
+        rerankEnabled: appConfig.rerankEnabled,
         historyEnabled: appConfig.historyEnabled,
         search: appConfig.search,
       };
@@ -2458,6 +2497,19 @@
                 </p>
               {/if}
 
+              {#if config.rerankEnabled && !currentSort && rerankIDs.length > 1}
+                <div class="mb-2 flex flex-wrap items-center gap-2 px-4">
+                  <Button size="sm" variant="outline" onclick={rerankResults} disabled={rerankBusy}>
+                    {rerankBusy ? 'Reranking…' : 'Rerank results'}
+                  </Button>
+                  {#if activeRerank}
+                    <Button size="sm" variant="ghost" onclick={() => (rerank = null)}
+                      >Restore search order</Button
+                    >
+                  {/if}
+                  {#if rerankError}<p class="text-sm" role="status">{rerankError}</p>{/if}
+                </div>
+              {/if}
               {#if displayResults.length > 0}
                 {#each displayResults as r, i}
                   {@const state = getResultState(r.url, r.label)}
