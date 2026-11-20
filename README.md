@@ -65,6 +65,13 @@ Optional semantic search sends document text to the embeddings endpoint you choo
 
 Unlike traditional search engines, Nogon builds a personal search index from the web pages and files you choose to keep. Your content stays on your Nogon server, making it useful for finding information you've already encountered without relying on a third-party search provider.
 
+## Theophysics research control center (this fork)
+
+This fork adds a separate research interface with PostgreSQL-backed jobs,
+canonical document identities, duplicate detection, classification review, and
+Markdown export. Hister remains the full-text search engine underneath it.
+See [the first-slice setup and deployment guide](deploy/theophysics/README.md).
+
 ## Development
 
 Requirements are Go 1.26, npm, and a C compiler for CGO dependencies.

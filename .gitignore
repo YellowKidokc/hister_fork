@@ -28,3 +28,6 @@ webui/website/playwright-report/
 .pre-commit-config.yaml
 scripts/fetch_dataset_helpers/my-rfc-mirror/
 scripts/**/__pycache__
+
+# Theophysics local runtime data (configure TP_DATA_DIR outside the checkout).
+.theophysics-data/
