@@ -1,0 +1,97 @@
+# Nogon + Theophysics research center, deployed as a Portainer stack.
+#
+# Portainer: Stacks > Add stack > Repository
+#   Repository URL:  https://github.com/YellowKidokc/hister_fork
+#   Reference:       refs/heads/master
+#   Compose path:    deploy/synology/compose.yaml
+# Then fill in the environment variables listed in README.md.
+#
+# Folder layout (create these in File Station first, see README.md):
+#   /volume2/docker/nogon/data       <- Nogon search index, database, saved pages
+#   /volume2/docker/nogon/research   <- research center uploads and receipts
+#   /volume2/docker/nogon/postgres   <- research center PostgreSQL database
+
+services:
+  nogon:
+    container_name: Nogon
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: release
+    image: nogon-theophysics:local
+    # Run as your Synology user so it can write to the folders you created.
+    user: ${PUID:-1026}:${PGID:-100}
+    restart: on-failure:5
+    ports:
+      - 4433:4433
+    environment:
+      NOGON__SERVER__ADDRESS: 0.0.0.0:4433
+      # The address you type into the browser and the extension.
+      NOGON__SERVER__BASE_URL: ${NOGON_URL:-http://192.168.1.177:4433}
+      # Optional. Leave empty for no login, or set a token and enter the same
+      # token in the browser extension settings.
+      NOGON__APP__ACCESS_TOKEN: ${NOGON_TOKEN:-}
+      HOME: /hister/data
+      TZ: ${TZ:-America/Chicago}
+    volumes:
+      - /volume2/docker/nogon/data:/hister/data:rw
+    security_opt:
+      - no-new-privileges:true
+
+  research-db:
+    container_name: Nogon-Research-DB
+    image: postgres:17
+    restart: on-failure:5
+    environment:
+      POSTGRES_DB: theophysics
+      POSTGRES_USER: theophysics
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in the stack environment variables}
+      TZ: ${TZ:-America/Chicago}
+    volumes:
+      - /volume2/docker/nogon/postgres:/var/lib/postgresql/data:rw
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U theophysics -d theophysics']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    security_opt:
+      - no-new-privileges:true
+
+  research:
+    container_name: Nogon-Research
+    build:
+      context: ../..
+      dockerfile: deploy/theophysics/Dockerfile
+    image: nogon-research:local
+    user: ${PUID:-1026}:${PGID:-100}
+    restart: on-failure:5
+    depends_on:
+      research-db:
+        condition: service_healthy
+      nogon:
+        condition: service_started
+    ports:
+      - 4444:4444
+    environment:
+      TP_ADDRESS: 0.0.0.0:4444
+      TP_DATABASE_URL: postgres://theophysics:${DB_PASSWORD}@research-db:5432/theophysics?sslmode=disable
+      # Login token for the research center (at least 24 characters).
+      TP_ACCESS_TOKEN: ${RESEARCH_TOKEN:?set RESEARCH_TOKEN (24+ characters)}
+      TP_HISTER_URL: http://nogon:4433
+      TP_HISTER_TOKEN: ${NOGON_TOKEN:-}
+      TP_DATA_DIR: /data
+      # Websites the URL importer may download from, comma separated.
+      TP_URL_HOSTS: ${URL_HOSTS:-}
+      # Optional local AI (OpenAI-compatible, e.g. Ollama). Used only when you
+      # press a button that asks for it. Example for Ollama on the NAS:
+      #   TP_AI_BASE_URL: http://192.168.1.177:11434/v1
+      #   TP_AI_MODEL: llama3.1:8b
+      TP_AI_BASE_URL: ${AI_BASE_URL:-}
+      TP_AI_MODEL: ${AI_MODEL:-}
+      TP_AI_KEY: ${AI_KEY:-}
+      NO_PROXY: 127.0.0.1,localhost,nogon,research-db
+      TZ: ${TZ:-America/Chicago}
+    volumes:
+      - /volume2/docker/nogon/research:/data:rw
+    security_opt:
+      - no-new-privileges:true
