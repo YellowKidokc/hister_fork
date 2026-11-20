@@ -1,5 +1,7 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <script lang="ts">
+  import DocumentAnnotations from './DocumentAnnotations.svelte';
+  import { publicConfig } from '#lib/stores.js';
   import VideoPreview from './VideoPreview.svelte';
   import IssuePreview from './IssuePreview.svelte';
   import CodePreview, { parseCodePreview, type CodePreviewData } from './CodePreview.svelte';
@@ -586,6 +588,13 @@
           {/if}
         </h2>
       </div>
+      {#if $publicConfig?.canWrite && !viewingVersion}
+        {#key documentId || url}
+          <DocumentAnnotations
+            endpoint={documentRequestUrl('/document/annotations', url, documentId)}
+          />
+        {/key}
+      {/if}
       {#if showDocumentDetails && hasDocumentDetails}
         <div
           id="preview-document-details"

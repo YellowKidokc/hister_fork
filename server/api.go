@@ -945,6 +945,23 @@ func init() {
 			},
 		},
 		{
+			Name:        "Get document annotations",
+			Path:        "/api/document/annotations",
+			Method:      GET,
+			NoStore:     true,
+			Handler:     serveDocumentAnnotations,
+			Description: "Read the current user's tags, notes, and summary for an indexed document",
+		},
+		{
+			Name:         "Save document annotations",
+			Path:         "/api/document/annotations",
+			Method:       POST,
+			CSRFRequired: true,
+			NoStore:      true,
+			Handler:      serveDocumentAnnotations,
+			Description:  "Save the current user's tags, notes, and summary for an indexed document",
+		},
+		{
 			Name:         "Preview",
 			Path:         "/api/preview",
 			Method:       GET,

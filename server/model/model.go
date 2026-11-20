@@ -116,6 +116,7 @@ func automigrate() error {
 		&CrawlJob{},
 		&CrawlURL{},
 		&DocumentVersion{},
+		&DocumentAnnotation{},
 		&EmbeddingJob{},
 		&WebSession{},
 		&ResearchJob{},
