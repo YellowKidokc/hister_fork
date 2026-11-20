@@ -962,6 +962,15 @@ func init() {
 			Description:  "Save the current user's tags, notes, and summary for an indexed document",
 		},
 		{
+			Name:         "Ask AI",
+			Path:         "/api/ai/chat",
+			Method:       POST,
+			CSRFRequired: true,
+			NoStore:      true,
+			Handler:      serveHomeChat,
+			Description:  "Answer one user question with optional authorized indexed source excerpts",
+		},
+		{
 			Name:         "Generate document summary",
 			Path:         "/api/document/summary",
 			Method:       POST,

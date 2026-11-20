@@ -56,6 +56,7 @@
   } from '#lib/query-suggestions.js';
   import type { QuerySuggestion } from '#lib/query-suggestions.js';
   import { animate } from 'animejs';
+  import HomeChat from '#lib/components/HomeChat.svelte';
   import HomeResearch from '#lib/components/HomeResearch.svelte';
   import { Input } from '@nogon/components/ui/input';
   import { Button } from '@nogon/components/ui/button';
@@ -2849,6 +2850,8 @@
         </div>
       </section>
     {/if}
+
+    <HomeChat />
 
     {#if statsLoaded && statsAvailable && historyCount > 0}
       <HomeResearch canWrite={config.canWrite} onSearch={clickChip} />

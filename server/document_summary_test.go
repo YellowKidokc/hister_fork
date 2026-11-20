@@ -33,7 +33,7 @@ func TestGenerateDocumentSummary(t *testing.T) {
 
 	t.Setenv("TP_AI_BASE_URL", provider.URL+"/v1/")
 	t.Setenv("TP_AI_MODEL", "test-model")
-	endpoint, model := summaryService()
+	endpoint, model := chatService()
 	got, err := generateDocumentSummary(t.Context(), endpoint, model, "test-key", strings.Repeat("é", 13000))
 	if err != nil || got != "A generated draft." {
 		t.Fatalf("summary = %q, %v", got, err)
