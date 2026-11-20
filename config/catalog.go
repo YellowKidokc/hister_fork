@@ -510,6 +510,13 @@ func FieldCatalog() []FieldMetadata {
 			Schema:      SettingSchema{Sensitivity: "none"},
 		},
 		{
+			Path:        "app.strip_images",
+			Group:       groupSearchBehavior,
+			Label:       "Strip images from saved pages",
+			Description: "Remove image elements from newly stored page HTML. Keeps extracted text and favicons.",
+			Schema:      SettingSchema{Sensitivity: "none"},
+		},
+		{
 			Path:        "app.access_token",
 			Group:       groupAccess,
 			Label:       "Access token",

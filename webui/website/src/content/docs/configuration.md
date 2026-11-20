@@ -1241,6 +1241,17 @@ app:
 
 > **Note**: Favicons are unaffected by this setting and are always stored.
 
+## Strip images from saved pages
+
+Set `app.strip_images` to remove image elements from newly captured page HTML.
+Nogon still indexes the extracted text and saves the site's favicon. Existing
+saved HTML remains readable.
+
+```yaml
+app:
+  strip_images: true
+```
+
 ## Access Token
 
 The `app.access_token` setting provides a simple authentication mechanism to secure your Nogon instance. When configured, clients must include the token in API requests using the `X-Access-Token` header or the `Authorization: Bearer TOKEN` header. This is particularly useful when exposing Nogon to the network or internet, preventing unauthorized access to your browsing history and search index.

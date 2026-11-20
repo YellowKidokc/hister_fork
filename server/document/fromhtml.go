@@ -36,6 +36,20 @@ func FromHTMLWithFallbackURL(html, fallbackURL string) (*Document, error) {
 	}, nil
 }
 
+// StripHTMLImages removes page image elements while preserving adjacent content.
+func StripHTMLImages(source string) (string, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(source))
+	if err != nil {
+		return "", err
+	}
+	images := doc.Find("img, picture, svg, input[type=image]")
+	if images.Length() == 0 {
+		return source, nil
+	}
+	images.Remove()
+	return doc.Html()
+}
+
 func extractURL(doc *goquery.Document) string {
 	if href, ok := doc.Find(`link[rel="canonical"]`).First().Attr("href"); ok {
 		if u := strings.TrimSpace(href); u != "" {

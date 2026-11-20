@@ -61,6 +61,7 @@ type Indexer struct {
 	embeddingQueue    *embeddingQueue
 	embeddingWorkers  int
 	disablePreviews   bool
+	stripImages       bool
 	userHandling      bool
 	directories       []*config.Directory
 	maxFileSize       int64
@@ -455,6 +456,7 @@ func New(cfg *config.Config) (*Indexer, error) {
 		return nil, fmt.Errorf("store initial embedding configuration metadata: %w", err)
 	}
 	idx.disablePreviews = cfg.App.DisablePreviews
+	idx.stripImages = cfg.App.StripImages
 	idx.userHandling = cfg.App.UserHandling
 	idx.directories = cfg.Indexer.Directories
 	idx.maxFileSize = defaultMaxFileSize
@@ -791,6 +793,7 @@ func (idx *Indexer) reindex(ctx context.Context, basePath string, rules *config.
 		fileExtractor:    idx.fileExtractor,
 		sensitivePattern: idx.sensitivePattern,
 		disablePreviews:  idx.disablePreviews,
+		stripImages:      idx.stripImages,
 		userHandling:     idx.userHandling,
 		data:             idx.data,
 		embedCtx:         ctx,
@@ -1581,7 +1584,14 @@ func (i *Indexer) prepareForStorage(d *document.Document) (_ *dataWrite, err err
 		d.HTMLKey = ""
 	} else {
 		if d.HTML != "" {
-			key, err := data.write(htmlSubdir, []byte(d.HTML))
+			storedHTML := d.HTML
+			if i.stripImages && d.Type == document.Web && d.HTMLKey == "" {
+				storedHTML, err = document.StripHTMLImages(storedHTML)
+				if err != nil {
+					return nil, fmt.Errorf("strip images before storing HTML: %w", err)
+				}
+			}
+			key, err := data.write(htmlSubdir, []byte(storedHTML))
 			if err != nil {
 				return nil, fmt.Errorf("store HTML: %w", err)
 			}
