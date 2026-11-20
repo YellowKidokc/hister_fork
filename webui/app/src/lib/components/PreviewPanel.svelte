@@ -37,6 +37,7 @@
     Video,
   } from '@lucide/svelte';
   import { onMount, untrack } from 'svelte';
+  import { publicConfig as readerConfig } from '#lib/stores.js';
 
   interface Props {
     url: string;
@@ -504,6 +505,28 @@
                 >Open direct preview</Tooltip.Content
               >
             </Tooltip.Root>
+            {#if $readerConfig?.canWrite && !viewingVersion}
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  {#snippet child({ props })}
+                    <Button
+                      {...props}
+                      variant="ghost"
+                      size="icon-sm"
+                      class="text-text-brand-muted hover:text-text-brand"
+                      href={`${resolve('/')}api${documentRequestUrl('/document/reader', url, documentId)}`}
+                      download="nogon-reader.html"
+                      aria-label="Save offline reader"
+                    >
+                      <Download class="size-4" />
+                    </Button>
+                  {/snippet}
+                </Tooltip.Trigger>
+                <Tooltip.Content role="tooltip" side="bottom" sideOffset={6}
+                  >Save offline reader</Tooltip.Content
+                >
+              </Tooltip.Root>
+            {/if}
             {#if hasDocumentDetails}
               <Tooltip.Root>
                 <Tooltip.Trigger onclick={toggleDocumentDetails}>
