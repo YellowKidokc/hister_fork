@@ -363,6 +363,9 @@ func deleteUser(query string, value any) error {
 		if err := checkAdminRemoval(tx, &user); err != nil {
 			return err
 		}
+		if err := tx.Where("user_id = ?", user.ID).Delete(&VisualArchive{}).Error; err != nil {
+			return err
+		}
 		return tx.Delete(&user).Error
 	})
 }

@@ -1849,6 +1849,9 @@ func (b *MultiBatch) Save() error {
 	}
 	b.indexer.cleanupDataKeys(b.orphanedHTMLKeys, "", b.orphanedFaviconKeys, "")
 	for id := range b.deletedIDs {
+		if err := model.DeleteDocumentVisualArchives(id); err != nil {
+			log.Warn().Err(err).Msg("failed to remove document visual archive")
+		}
 		if err := b.indexer.cancelEmbedding(id); err != nil {
 			log.Warn().Err(err).Str("id", id).Msg("failed to cancel embedding job")
 		}
@@ -1872,6 +1875,9 @@ func (i *Indexer) Delete(id string) error {
 		if err := idx.Delete(id); err != nil {
 			return err
 		}
+	}
+	if err := model.DeleteDocumentVisualArchives(id); err != nil {
+		log.Warn().Err(err).Msg("failed to remove document visual archive")
 	}
 	if err := i.cancelEmbedding(id); err != nil {
 		log.Warn().Err(err).Str("id", id).Msg("failed to cancel embedding job")

@@ -424,6 +424,7 @@ func serveConfig(c *webContext) {
 		Authenticated        bool                      `json:"authenticated"`
 		DiagnosticsAvailable bool                      `json:"diagnosticsAvailable"`
 		Public               bool                      `json:"public"`
+		VisualArchives       bool                      `json:"visualArchivesEnabled,omitempty"`
 		CanWrite             bool                      `json:"canWrite"`
 		CanConfigure         bool                      `json:"canConfigure"`
 		HistoryEnabled       bool                      `json:"historyEnabled"`
@@ -471,6 +472,7 @@ func serveConfig(c *webContext) {
 		DiagnosticsAvailable: true,
 		Public:               c.Config.App.Public,
 		CanWrite:             canWrite(c),
+		VisualArchives:       canWrite(c) && c.Config.App.VisualArchives,
 		CanConfigure:         canConfigure(c),
 		HistoryEnabled:       historyEnabled(c),
 		Username:             c.Username,
