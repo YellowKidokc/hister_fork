@@ -13,6 +13,8 @@ COPY files/ files/
 COPY client/ client/
 COPY server/types/ server/types/
 COPY server/languages/ server/languages/
+COPY server/errors/ server/errors/
+COPY server/oauth/ server/oauth/
 COPY server/sanitizer/ server/sanitizer/
 COPY internal/research/ internal/research/
 COPY cmd/theophysics/ cmd/theophysics/
