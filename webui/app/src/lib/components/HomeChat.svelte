@@ -134,7 +134,7 @@
       </label>
       <label class="grid gap-1">
         Search terms for indexed sources (optional)
-        <Input bind:value={search} maxlength="128" disabled={pending} />
+        <Input bind:value={search} maxlength={128} disabled={pending} />
       </label>
       <p class="text-text-brand-muted">
         Sending shares the question and any matching excerpts with your configured AI service.

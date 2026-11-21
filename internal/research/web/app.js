@@ -116,9 +116,11 @@ async function connect() {
   $('access-token').value = '';
   $('login').hidden = true;
   $('shell').hidden = false;
-  $('url-hosts').textContent = config.url_hosts?.length
-    ? `Enabled source hosts: ${config.url_hosts.join(', ')}. Redirect hosts must also be enabled.`
-    : 'URL fetching is not enabled yet. Set TP_URL_HOSTS on the server to the public source hostnames you want to import.';
+  $('url-hosts').textContent = config.url_hosts?.includes('*')
+    ? 'Links from any public website can be imported. Home-network addresses are blocked.'
+    : config.url_hosts?.length
+      ? `Enabled source hosts: ${config.url_hosts.join(', ')}. Redirect hosts must also be enabled.`
+      : 'URL fetching is not enabled yet. Set TP_URL_HOSTS on the server to the public source hostnames you want to import.';
   $('suggest-ai').title = config.ai_enabled
     ? 'Send selected document excerpts to your configured model for classification proposals.'
     : 'No AI provider configured. Manual classification and Inbox/Workbench work without AI.';

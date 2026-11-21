@@ -2,7 +2,7 @@
 #
 # Portainer: Stacks > Add stack > Repository
 #   Repository URL:  https://github.com/YellowKidokc/hister_fork
-#   Reference:       refs/heads/codex/preinstall
+#   Reference:       refs/heads/master
 #   Compose path:    deploy/synology/compose.yaml
 # Then fill in the environment variables listed in README.md.
 #
@@ -86,8 +86,10 @@ services:
       TP_HISTER_URL: http://nogon:4433
       TP_HISTER_TOKEN: ${NOGON_TOKEN:-}
       TP_DATA_DIR: /data
-      # Websites the URL importer may download from, comma separated.
-      TP_URL_HOSTS: ${URL_HOSTS:-}
+      # Websites the URL importer may download from. '*' (default) allows any
+      # public website; home-network and local addresses are always blocked.
+      # Or list exact hostnames, comma separated, to restrict it.
+      TP_URL_HOSTS: ${URL_HOSTS:-*}
       # Optional local AI (OpenAI-compatible, e.g. Ollama). Used only when you
       # press a button that asks for it. Example for Ollama on the NAS:
       #   TP_AI_BASE_URL: http://192.168.1.177:11434/v1

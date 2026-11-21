@@ -42,7 +42,7 @@ The containers run as your Synology user so they can write to the folders. The f
 | Field                | Value                                         |
 | -------------------- | --------------------------------------------- |
 | Repository URL       | `https://github.com/YellowKidokc/hister_fork` |
-| Repository reference | `refs/heads/codex/preinstall`                           |
+| Repository reference | `refs/heads/master`                           |
 | Compose path         | `deploy/synology/compose.yaml`                |
 
 Under **Environment variables**, add:
@@ -59,7 +59,7 @@ Under **Environment variables**, add:
 
 Optional stack variables:
 
-- `URL_HOSTS` lists the hosts the research center may import.
+- `URL_HOSTS` controls which websites link imports may download from. Leave it unset (or `*`) to allow any public website, so a list of 500 links from different sites all gets fetched. Addresses on your home network and local names are always blocked. To restrict imports, list exact hostnames separated by commas.
 - `AI_BASE_URL` and `AI_MODEL` enable on-demand summaries, chat, and classification. For Ollama, use an address reachable from the containers, such as `http://192.168.1.177:11434/v1`. Set `AI_KEY` only if your provider requires one.
 - `RERANK_ENDPOINT` enables the **Rerank results** action. Set the full endpoint, including `/v1/rerank`. `RERANK_MODEL` and `RERANK_KEY` are optional provider settings.
 
