@@ -5,7 +5,11 @@ const el = (tag, text, className) => {
   if (className) node.className = className;
   return node;
 };
-let token = sessionStorage.getItem('tp-token') || '';
+const insideNogon = location.pathname.endsWith('/research/');
+const sessionKey = 'tp-token:' + location.pathname;
+let token =
+  sessionStorage.getItem(sessionKey) ||
+  (insideNogon ? '' : sessionStorage.getItem('tp-token') || '');
 let config,
   jobs = [],
   view = null,
@@ -37,7 +41,7 @@ async function request(path, options = {}, raw = false) {
   const headers = { Authorization: `Bearer ${token}`, ...options.headers };
   if (options.body && !(options.body instanceof FormData))
     headers['Content-Type'] = 'application/json';
-  const response = await fetch(path, { ...options, headers });
+  const response = await fetch(new URL(path.slice(1), document.baseURI), { ...options, headers });
   if (!response.ok) {
     let message = `Request failed (${response.status}).`;
     try {
@@ -108,13 +112,15 @@ function categoryPicker(container, current, onChange, disabled = false) {
 }
 async function connect() {
   config = await request('/v1/config');
-  sessionStorage.setItem('tp-token', token);
+  sessionStorage.setItem(sessionKey, token);
   $('access-token').value = '';
   $('login').hidden = true;
   $('shell').hidden = false;
-  $('url-hosts').textContent = config.url_hosts?.length
-    ? `Enabled source hosts: ${config.url_hosts.join(', ')}. Redirect hosts must also be enabled.`
-    : 'URL fetching is not enabled yet. Set TP_URL_HOSTS on the server to the public source hostnames you want to import.';
+  $('url-hosts').textContent = config.url_hosts?.includes('*')
+    ? 'Links from any public website can be imported. Home-network addresses are blocked.'
+    : config.url_hosts?.length
+      ? `Enabled source hosts: ${config.url_hosts.join(', ')}. Redirect hosts must also be enabled.`
+      : 'URL fetching is not enabled yet. Set TP_URL_HOSTS on the server to the public source hostnames you want to import.';
   $('suggest-ai').title = config.ai_enabled
     ? 'Send selected document excerpts to your configured model for classification proposals.'
     : 'No AI provider configured. Manual classification and Inbox/Workbench work without AI.';
@@ -610,7 +616,8 @@ $('login-form').addEventListener('submit', async (event) => {
   }
 });
 $('disconnect').addEventListener('click', () => {
-  sessionStorage.removeItem('tp-token');
+  sessionStorage.removeItem(sessionKey);
+  if (!insideNogon) sessionStorage.removeItem('tp-token');
   location.reload();
 });
 $('nav-jobs').addEventListener(
@@ -821,6 +828,7 @@ setInterval(async () => {
     } catch {}
   }
 }, 3000);
+if (insideNogon) $('legacy-jobs').hidden = false;
 if (token) {
   connect().catch((error) => {
     $('login-error').textContent = error.message;

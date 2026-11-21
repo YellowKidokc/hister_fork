@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -599,5 +600,47 @@ func TestConcurrentAliasesKeepDerivedTextConsistent(t *testing.T) {
 	entries, e := os.ReadDir(s.Root + "/text")
 	if e != nil || len(entries) != 1 {
 		t.Fatal("duplicate derivative retained", len(entries), e)
+	}
+}
+
+func TestAnyPublicHostAllowsPublicSitesOnly(t *testing.T) {
+	any := []string{AnyPublicHost}
+	for _, ok := range []string{"https://arxiv.org/abs/1", "http://news.example.org/a", "https://sub.blog.example.com/x?y=1"} {
+		if _, err := ValidateSourceURL(ok, any); err != nil {
+			t.Fatalf("%s rejected: %v", ok, err)
+		}
+	}
+	for _, bad := range []string{"http://localhost/", "http://192.168.1.177/", "http://10.0.0.1/", "http://nas.local/", "http://intranet/", "ftp://example.com/", "https://example.com:8443/"} {
+		if _, err := ValidateSourceURL(bad, any); err == nil {
+			t.Fatalf("%s accepted", bad)
+		}
+	}
+	// Without the wildcard, the exact allowlist still applies.
+	if _, err := ValidateSourceURL("https://arxiv.org/abs/1", []string{"example.com"}); err == nil {
+		t.Fatal("allowlist bypassed")
+	}
+	for _, ip := range []string{"127.0.0.1", "192.168.1.177", "10.1.2.3", "172.16.0.9", "169.254.169.254", "100.64.0.1", "::1", "fd00::1", "fe80::1", "0.0.0.0"} {
+		if publicIP(net.ParseIP(ip)) {
+			t.Fatalf("%s treated as public", ip)
+		}
+	}
+	for _, ip := range []string{"93.184.216.34", "1.1.1.1", "2606:4700:4700::1111"} {
+		if !publicIP(net.ParseIP(ip)) {
+			t.Fatalf("%s treated as private", ip)
+		}
+	}
+}
+
+func TestAnyPublicHostBlocksPrivateAddressesAtConnect(t *testing.T) {
+	local := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, "secret") }))
+	defer local.Close()
+	c := SourceHTTP([]string{AnyPublicHost})
+	resp, err := c.Get(local.URL)
+	if err == nil {
+		resp.Body.Close()
+		t.Fatal("connection to a loopback address was allowed")
+	}
+	if !strings.Contains(err.Error(), "not a public internet address") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

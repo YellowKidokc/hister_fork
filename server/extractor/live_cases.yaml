@@ -346,6 +346,25 @@ cases:
         - Big Buck Bunny
       min_preview_length: 100
 
+  - name: defuddle_wikipedia_article_http
+    url: https://en.wikipedia.org/wiki/Web_scraping
+    backend: http
+    extractor: Defuddle
+    requires_binary: defuddle-bridge
+    timeout: 30
+    run_chain: false
+    expect:
+      title_contains:
+        - Web scraping
+      text_contains:
+        - Web scraping
+      min_text_length: 1000
+      preview_contains:
+        - Web scraping
+      min_preview_length: 500
+      preview_not_contains:
+        - <script
+
   - name: readability_wikipedia_article_http
     url: https://en.wikipedia.org/wiki/Web_scraping
     backend: http
@@ -374,3 +393,24 @@ cases:
       text_contains:
         - documentation examples
       min_text_length: 100
+
+  - name: google_search_url_match_only
+    url: https://www.google.com/search?q=hister
+    fetch: false
+    extractor: Google
+    timeout: 10
+    run_chain: false
+    extract_decision: fallback
+    expect:
+      skip_indexing: true
+
+  # The HTML endpoint allows crawlers, unlike the /html path on duckduckgo.com,
+  # and serves results without JavaScript.
+  - name: duckduckgo_html_search_results
+    url: https://html.duckduckgo.com/html/?q=hister
+    backend: http
+    extractor: DuckDuckGo
+    timeout: 20
+    run_chain: false
+    expect:
+      min_extra_documents: 3

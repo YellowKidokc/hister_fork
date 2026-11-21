@@ -1,9 +1,14 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <script lang="ts">
+  import DocumentAnnotations from './DocumentAnnotations.svelte';
+  import { publicConfig } from '#lib/stores.js';
+  import VisualArchive from './VisualArchive.svelte';
   import VideoPreview from './VideoPreview.svelte';
+  import YouTubeDownload from './YouTubeDownload.svelte';
   import IssuePreview from './IssuePreview.svelte';
   import CodePreview, { parseCodePreview, type CodePreviewData } from './CodePreview.svelte';
   import { parseIssuePreview, type IssuePreviewData } from '#lib/issue-preview.js';
+  import DocumentVisits from './DocumentVisits.svelte';
   import PreviewLoadError from './PreviewLoadError.svelte';
   import { apiFetch } from '#lib/api.js';
   import { resolve } from '$app/paths';
@@ -77,6 +82,8 @@
   let loading = $state(false);
   let previewError = $state('');
   let versionCount = $state(0);
+  let hasDatedVisits = $state(false);
+  let youtubeDownloadable = $state(false);
   let versions = $state<DocumentVersion[]>([]);
   let showVersions = $state(false);
   let versionsLoading = $state(false);
@@ -276,6 +283,8 @@
       meta = data.meta ?? null;
       documentDetails = data.details;
       versionCount = data.version_count ?? 0;
+      hasDatedVisits = data.visit_count !== undefined;
+      youtubeDownloadable = data.youtube_downloadable === true;
       if (data.version_id && data.version_created_at) {
         viewingVersion = {
           id: data.version_id,
@@ -591,6 +600,42 @@
           id="preview-document-details"
           class="border-border-brand-muted mt-2 max-h-[min(20rem,40vh)] overflow-y-auto overscroll-contain border-t pt-2"
         >
+          {#if $publicConfig?.canWrite && !viewingVersion}
+            <a
+              href={`${resolve('/')}api${documentRequestUrl('/document/reader', url, documentId)}`}
+              class="text-nogon-teal inline-flex items-center gap-1 text-sm hover:underline"
+              download="nogon-reader.html"
+            >
+              <Download class="size-4" aria-hidden="true" /> Save offline reader
+            </a>
+          {/if}
+          {#if $publicConfig?.canWrite && !viewingVersion}
+            {#key documentId || url}
+              <DocumentAnnotations
+                endpoint={documentRequestUrl('/document/annotations', url, documentId)}
+                summaryEndpoint={$publicConfig.aiSummaryEnabled
+                  ? documentRequestUrl('/document/summary', url, documentId)
+                  : undefined}
+              />
+            {/key}
+          {/if}
+          {#if $publicConfig?.visualArchivesEnabled && !viewingVersion && documentDetails?.type === 'web' && documentDetails.user_id === ($publicConfig.userId ?? 0)}
+            {#key documentId || url}
+              <VisualArchive endpoint={documentRequestUrl('/document/visual', url, documentId)} />
+            {/key}
+          {/if}
+          {#if youtubeDownloadable}
+            {#key documentId || url}
+              <YouTubeDownload
+                endpoint={documentRequestUrl('/document/youtube', url, documentId)}
+              />
+            {/key}
+          {/if}
+          {#if hasDatedVisits}
+            {#key documentId || url}
+              <DocumentVisits endpoint={documentRequestUrl('/visits', url, documentId)} />
+            {/key}
+          {/if}
           {#if versionCount > 0 || meta?.videos?.length}
             <div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
               {#if versionCount > 0}

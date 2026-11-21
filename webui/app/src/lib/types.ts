@@ -44,6 +44,8 @@ export interface PreviewDocumentDetails {
 }
 
 export interface DocumentPreviewResponse {
+  visit_count?: number;
+  youtube_downloadable?: boolean;
   title: string;
   content: string;
   template: string;

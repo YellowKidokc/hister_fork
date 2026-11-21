@@ -3,6 +3,7 @@ package research
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/csv"
 	"encoding/xml"
 	"errors"
@@ -12,10 +13,50 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
-// Fetching is opt-in for exact public hostnames, including every redirect host.
+// AnyPublicHost in TP_URL_HOSTS allows downloads from every public website.
+// Hostnames that resolve to private, loopback or link-local addresses stay
+// blocked at connection time, so a link list cannot reach the home network.
+const AnyPublicHost = "*"
+
+func allowsAnyPublicHost(allowed []string) bool {
+	for _, h := range allowed {
+		if strings.TrimSpace(h) == AnyPublicHost {
+			return true
+		}
+	}
+	return false
+}
+
+var carrierGradeNAT = &net.IPNet{IP: net.IPv4(100, 64, 0, 0), Mask: net.CIDRMask(10, 32)}
+
+// publicIP reports whether ip is a globally routable unicast address.
+func publicIP(ip net.IP) bool {
+	return ip != nil && ip.IsGlobalUnicast() && !ip.IsPrivate() && !ip.IsLoopback() &&
+		!ip.IsLinkLocalUnicast() && !carrierGradeNAT.Contains(ip)
+}
+
+// publicOnlyDial refuses connections to non-public addresses after DNS
+// resolution, which also covers DNS rebinding.
+func publicOnlyDial(ctx context.Context, network, address string) (net.Conn, error) {
+	d := &net.Dialer{Timeout: 15 * time.Second, Control: func(_, addr string, _ syscall.RawConn) error {
+		host, _, err := net.SplitHostPort(addr)
+		if err != nil {
+			return err
+		}
+		if !publicIP(net.ParseIP(host)) {
+			return errors.New("source address is not a public internet address")
+		}
+		return nil
+	}}
+	return d.DialContext(ctx, network, address)
+}
+
+// Fetching is opt-in for exact public hostnames (or "*" for any public host),
+// including every redirect host.
 // This also works through the inherited cloud proxy; it never changes TLS trust.
 func ValidateSourceURL(raw string, allowed []string) (*url.URL, error) {
 	u, err := url.Parse(strings.TrimSpace(raw))
@@ -32,6 +73,9 @@ func ValidateSourceURL(raw string, allowed []string) (*url.URL, error) {
 	if host == "localhost" || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".local") || net.ParseIP(host) != nil || !strings.Contains(host, ".") {
 		return nil, errors.New("URL import requires an allowlisted public hostname")
 	}
+	if allowsAnyPublicHost(allowed) {
+		return u, nil
+	}
 	for _, h := range allowed {
 		if host == strings.ToLower(strings.TrimSpace(h)) {
 			return u, nil
@@ -40,13 +84,24 @@ func ValidateSourceURL(raw string, allowed []string) (*url.URL, error) {
 	return nil, errors.New("source hostname is not enabled in TP_URL_HOSTS")
 }
 func SourceHTTP(allowed []string) *http.Client {
-	return &http.Client{Timeout: 45 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error {
+	c := &http.Client{Timeout: 45 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 5 {
 			return errors.New("too many redirects")
 		}
 		_, err := ValidateSourceURL(req.URL.String(), allowed)
 		return err
 	}}
+	if allowsAnyPublicHost(allowed) {
+		// Connect directly so the address check sees the real destination.
+		c.Transport = &http.Transport{
+			DialContext:           publicOnlyDial,
+			TLSHandshakeTimeout:   15 * time.Second,
+			ResponseHeaderTimeout: 30 * time.Second,
+			MaxIdleConns:          20,
+			IdleConnTimeout:       60 * time.Second,
+		}
+	}
+	return c
 }
 
 // SpreadsheetURLs reads CSV/TSV or XLSX cells and hyperlink targets, with

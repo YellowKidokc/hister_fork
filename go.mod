@@ -26,6 +26,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/jackc/pgx/v5 v5.13.0
+	github.com/klauspost/compress v1.20.3
 	github.com/mattn/go-sqlite3 v1.14.53
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mmcdole/gofeed v1.5.0
@@ -101,7 +102,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.20.3 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect

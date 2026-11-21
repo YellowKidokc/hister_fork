@@ -55,6 +55,32 @@ func init() {
 			Description: "Research job control page",
 		},
 		&Endpoint{
+			Name:        "Legacy research jobs",
+			Path:        "/research/legacy",
+			Method:      GET,
+			NoStore:     true,
+			Handler:     serveLegacyResearchPage,
+			Description: "Browse saved jobs, receipts, and transcript instructions",
+		},
+		&Endpoint{
+			Name:        "Research control center",
+			Path:        "/research/{path...}",
+			Method:      GET,
+			NoStore:     true,
+			Handler:     serveResearchIntake,
+			Description: "Open the configured research control center",
+		},
+		&Endpoint{
+			Name:         "Research control center intake",
+			Path:         "/research/{path...}",
+			Method:       POST,
+			NoStore:      true,
+			CSRFRequired: true,
+			BodyLimit:    researchUploadLimit,
+			Handler:      serveResearchIntake,
+			Description:  "Send intake to the configured research control center",
+		},
+		&Endpoint{
 			Name:        "List research jobs",
 			Path:        "/api/research/jobs",
 			Method:      GET,
@@ -103,9 +129,24 @@ func init() {
 }
 
 func serveResearchPage(c *webContext) {
+	if researchIntakeUpstream(c.Config) != nil {
+		http.Redirect(c.Response, c.Request, c.Config.BasePathPrefix()+"/research/", http.StatusTemporaryRedirect)
+		return
+	}
+	serveLegacyResearchPage(c)
+}
+
+func serveLegacyResearchPage(c *webContext) {
 	c.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
 	c.Response.Header().Set("Content-Security-Policy", fmt.Sprintf("default-src 'self'; script-src 'nonce-%s'; style-src 'unsafe-inline'", c.nonce))
 	page := strings.ReplaceAll(string(researchPageHTML), "<script>", fmt.Sprintf(`<script nonce="%s">`, c.nonce))
+	prefix := c.Config.BasePathPrefix()
+	page = strings.Replace(page, "fetch(path,", "fetch("+strconv.Quote(prefix)+"+path,", 1)
+	if researchIntakeUpstream(c.Config) != nil {
+		page = strings.Replace(page, "<body>", `<body data-intake-readonly>`, 1)
+		page = strings.Replace(page, "<h1>Research jobs</h1>",
+			`<h1>Saved research jobs</h1><p>Use the <a href="./">research control center</a> for new jobs and uploads.</p>`, 1)
+	}
 	if _, err := io.WriteString(c.Response, page); err != nil {
 		log.Warn().Err(err).Msg("failed to write research page")
 	}
@@ -141,6 +182,9 @@ func serveResearchJobs(c *webContext) {
 }
 
 func serveCreateResearchJob(c *webContext) {
+	if legacyIntakeClosed(c) {
+		return
+	}
 	var req struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
@@ -204,6 +248,9 @@ type researchUploadResult struct {
 }
 
 func serveResearchUpload(c *webContext) {
+	if legacyIntakeClosed(c) {
+		return
+	}
 	job, ok := researchJobFromPath(c)
 	if !ok {
 		return
